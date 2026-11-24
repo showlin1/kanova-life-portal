@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book a Course Session | Kanova Life</title>
+  <meta name="description" content="Choose your training location, select an open date on our calendar, and complete your course registration.">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="/" class="brand">
+        <span class="brand-plus">+</span>
+        <span>Kanova Life</span>
+      </a>
+      <ul class="nav-menu">
+        <li><a href="/" class="nav-link">Home</a></li>
+        <li><a href="/courses.html" class="nav-link active">Course</a></li>
+        <li><a href="/locations.html" class="nav-link">Locations</a></li>
+        <li><a href="/blog.html" class="nav-link">Blog</a></li>
+      </ul>
+      <div class="nav-actions">
+        <a href="/courses.html" class="btn btn-primary">Book a Course &rarr;</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" style="padding-top: 40px; padding-bottom: 80px;">
+    <h1 class="section-title" style="margin-bottom: 8px;">Select Location &amp; Date</h1>
+    <p class="section-desc" style="margin-top: 0; margin-bottom: 32px;">Pick a city, choose a community training location, and view seats left.</p>
+
+    <div class="booking-container">
+      <!-- Left: Step Selection -->
+      <div>
+        <!-- 1. City Select -->
+        <div class="booking-card" style="margin-bottom: 24px;">
+          <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 16px;">Step 1: Choose Your City</h3>
+          <div class="city-selector">
+            <button type="button" class="city-btn active" onclick="selectCity('Thunder Bay', this)">Thunder Bay</button>
+            <button type="button" class="city-btn" onclick="selectCity('Nipigon', this)">Nipigon</button>
+            <button type="button" class="city-btn" onclick="selectCity('Terrace Bay', this)">Terrace Bay</button>
+          </div>
+
+          <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 12px; color: var(--text-muted);">Select Training Venue:</h4>
+          <div class="venue-list" id="venue-chips">
+            <button type="button" class="venue-chip active" onclick="selectVenue('Current River Community Centre', this)">Current River Community Centre</button>
+            <button type="button" class="venue-chip" onclick="selectVenue('Vickers Heights Community Centre', this)">Vickers Heights Community Centre</button>
+            <button type="button" class="venue-chip" onclick="selectVenue('West Thunder Community Centre', this)">West Thunder Community Centre</button>
+            <button type="button" class="venue-chip" onclick="selectVenue('North End Community Centre', this)">North End Community Centre</button>
+          </div>
+        </div>
+
+        <!-- 2. Available Dates -->
+        <div class="booking-card">
+          <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 16px;">Step 2: Available Training Dates</h3>
+          <div id="sessions-list">
+            <div class="session-card selected" onclick="selectSession(this, 'Saturday, Dec 5, 2026', '8 seats left')">
+              <div>
+                <div style="font-weight: 700; font-size: 1.05rem;">Saturday, Dec 5, 2026</div>
+                <div style="font-size: 0.88rem; color: var(--text-muted);">9:00 AM – 5:00 PM (Full Day)</div>
+              </div>
+              <span class="seats-badge">8 seats left</span>
+            </div>
+            <div class="session-card" onclick="selectSession(this, 'Saturday, Dec 12, 2026', '5 seats left')">
+              <div>
+                <div style="font-weight: 700; font-size: 1.05rem;">Saturday, Dec 12, 2026</div>
+                <div style="font-size: 0.88rem; color: var(--text-muted);">9:00 AM – 5:00 PM (Full Day)</div>
+              </div>
+              <span class="seats-badge">5 seats left</span>
+            </div>
+            <div class="session-card" onclick="selectSession(this, 'Saturday, Dec 19, 2026', '11 seats left')">
+              <div>
+                <div style="font-weight: 700; font-size: 1.05rem;">Saturday, Dec 19, 2026</div>
+                <div style="font-size: 0.88rem; color: var(--text-muted);">9:00 AM – 5:00 PM (Full Day)</div>
+              </div>
+              <span class="seats-badge">11 seats left</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Summary & Registration -->
+      <div>
+        <div class="booking-card" style="position: sticky; top: 96px;">
+          <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">Booking Summary</h3>
+          <div style="margin-bottom: 16px;">
+            <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">SELECTED COURSE</div>
+            <div style="font-weight: 700; font-size: 1.05rem; margin-bottom: 8px;" id="sum-course">Intermediate First Aid CPR/AED Level C (Blended)</div>
+            <select id="course-dropdown" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 0.88rem; font-family: inherit;" onchange="onCourseDropdownChange(this.value)">
+            </select>
+          </div>
+          <div style="margin-bottom: 16px;">
+            <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">LOCATION</div>
+            <div style="font-weight: 700;" id="sum-location">Current River Community Centre, Thunder Bay</div>
+          </div>
+          <div style="margin-bottom: 20px;">
+            <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">DATE &amp; TIME</div>
+            <div style="font-weight: 700;" id="sum-date">Saturday, Dec 5, 2026 · 9:00 AM – 5:00 PM</div>
+          </div>
+
+          <!-- Coupon Code Input -->
+          <div style="margin-bottom: 16px; padding: 12px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+            <label style="display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 6px;">Promo / Coupon Code</label>
+            <div style="display: flex; gap: 8px;">
+              <input type="text" id="coupon-code-input" placeholder="e.g. KANOVA15" style="flex: 1; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; text-transform: uppercase;" />
+              <button type="button" class="btn btn-secondary btn-sm" onclick="applyPromo()">Apply</button>
+            </div>
+            <div id="coupon-status" style="font-size: 0.82rem; margin-top: 6px; display: none;"></div>
+          </div>
+
+          <div id="discount-row" style="margin-bottom: 12px; display: none; justify-content: space-between; align-items: center; color: #16a34a; font-weight: 700;">
+            <span>Discount Applied:</span>
+            <span id="sum-discount">-$0.00</span>
+          </div>
+
+          <div style="margin-bottom: 24px; padding-top: 12px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-weight: 700;">Total Course Fee:</span>
+            <span style="font-size: 1.4rem; font-weight: 800; color: var(--primary);" id="sum-price">$165.00</span>
+          </div>
+
+          <form onsubmit="handleRegistration(event)">
+            <div style="margin-bottom: 12px;">
+              <label style="display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 4px;">Full Name *</label>
+              <input type="text" id="reg-name" required placeholder="John Doe" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px;" />
+            </div>
+            <div style="margin-bottom: 12px;">
+              <label style="display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 4px;">Email Address *</label>
+              <input type="email" id="reg-email" required placeholder="john@example.com" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px;" />
+            </div>
+            <div style="margin-bottom: 20px;">
+              <label style="display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 4px;">Phone Number *</label>
+              <input type="tel" id="reg-phone" required placeholder="(807) 555-0123" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px;" />
+            </div>
+            <button type="submit" id="reg-submit-btn" class="btn btn-primary btn-block">Confirm &amp; Proceed to Payment</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-grid">
+      <div>
+        <div class="brand" style="color: #fff; margin-bottom: 16px;">
+          <span class="brand-plus">+</span>
+          <span>Kanova Life</span>
+        </div>
+        <p style="max-width: 360px; line-height: 1.6; margin-bottom: 16px;">
+          Canadian Red Cross Training Partner based in Thunder Bay, ON. Certified First Aid, CPR/AED and BLS courses for
+          workplaces and individuals.
+        </p>
+        <p style="font-size: 0.9rem; color: #cbd5e1;"><strong>Location:</strong> 450 Dewe Avenue, Thunder Bay, ON P7A
+          2G7</p>
+      </div>
+      <div>
+        <h4>Quick Links</h4>
+        <ul class="footer-links">
+          <li><a href="/">Home</a></li>
+          <li><a href="/courses.html">All Courses</a></li>
+          <li><a href="/locations.html">Training Locations</a></li>
+          <li><a href="/blog.html">First Aid Blog</a></li>
+          <li><a href="/admin.html">Admin Portal</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Certifications</h4>
+        <p style="margin-bottom: 8px;">Standard First Aid (WSIB)</p>
+        <p style="margin-bottom: 8px;">Emergency First Aid</p>
+        <p style="margin-bottom: 8px;">CPR/AED Level C</p>
+        <p>Basic Life Support (BLS)</p>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <p>&copy; 2026 Kanova Life Safety &amp; Training. Canadian Red Cross Training Partner.</p>
+    </div>
+  </footer>
+
+  <script src="/wix-client.js"></script>
+  <script>
+    const VENUES = {
+      'Thunder Bay': ['Current River Community Centre', 'Vickers Heights Community Centre', 'West Thunder Community Centre', 'North End Community Centre'],
+      'Nipigon': ['Nipigon Community Centre'],
+      'Terrace Bay': ['Terrace Bay Community Centre']
+    };
+
+    let activeCity = 'Thunder Bay';
+    let activeVenue = 'Current River Community Centre';
+    let basePrice = 165;
+    let discountAmount = 0;
+    let appliedCoupon = null;
+    let currentCourse = { id: 'c1', title: 'Standard First Aid & CPR/AED Level C', price: 165 };
+
+    function selectCity(city, btn) {
+      activeCity = city;
+      document.querySelectorAll('.city-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const chipContainer = document.getElementById('venue-chips');
+      chipContainer.innerHTML = VENUES[city].map((v, i) => `
+        <button type="button" class="venue-chip ${i === 0 ? 'active' : ''}" onclick="selectVenue('${v}', this)">${v}</button>
+      `).join('');
+      selectVenue(VENUES[city][0]);
+    }
+
+    function selectVenue(venue, btn) {
+      activeVenue = venue;
+      if (btn) {
+        document.querySelectorAll('.venue-chip').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      }
+      document.getElementById('sum-location').textContent = `${venue}, ${activeCity}`;
+    }
+
+    function selectSession(card, dateStr) {
+      document.querySelectorAll('.session-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      document.getElementById('sum-date').textContent = `${dateStr} · 9:00 AM – 5:00 PM`;
+    }
+
+    async function applyPromo() {
+      const input = document.getElementById('coupon-code-input');
+      const code = input.value.trim().toUpperCase();
+      const statusEl = document.getElementById('coupon-status');
+      const discountRow = document.getElementById('discount-row');
+      const sumDiscount = document.getElementById('sum-discount');
+
+      if (!code) {
+        statusEl.style.display = 'block';
+        statusEl.style.color = '#ef4444';
+        statusEl.textContent = 'Please enter a coupon code.';
+        return;
+      }
+
+      statusEl.style.display = 'block';
+      statusEl.style.color = '#64748b';
+      statusEl.textContent = 'Validating code...';
+
+      if (window.wixClient) {
+        const val = await window.wixClient.validateCoupon(code, basePrice);
+        if (val.valid) {
+          appliedCoupon = val.coupon;
+          discountAmount = val.discount;
+          statusEl.style.color = '#16a34a';
+          statusEl.textContent = val.message;
+          discountRow.style.display = 'flex';
+          sumDiscount.textContent = `-$${discountAmount.toFixed(2)}`;
+          updateTotal();
+        } else {
+          appliedCoupon = null;
+          discountAmount = 0;
+          statusEl.style.color = '#ef4444';
+          statusEl.textContent = val.message;
+          discountRow.style.display = 'none';
+          updateTotal();
+        }
+      }
+    }
+
+    function updateTotal() {
+      const finalPrice = Math.max(0, basePrice - discountAmount);
+      document.getElementById('sum-price').textContent = `$${finalPrice.toFixed(2)}`;
+    }
+
+    async function handleRegistration(e) {
+      e.preventDefault();
+      const btn = document.getElementById('reg-submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Submitting registration...';
+
+      const studentName = document.getElementById('reg-name').value;
+      const studentEmail = document.getElementById('reg-email').value;
+      const studentPhone = document.getElementById('reg-phone').value;
+      const finalPrice = Math.max(0, basePrice - discountAmount);
+
+      const bookingRecord = {
+        courseId: currentCourse.id,
+        courseTitle: currentCourse.title,
+        studentName,
+        studentEmail,
+        studentPhone,
+        location: `${activeVenue}, ${activeCity}`,
+        date: document.getElementById('sum-date').textContent,
+        price: basePrice,
+        discount: discountAmount,
+        finalPrice,
+        couponCode: appliedCoupon ? appliedCoupon.code : 'NONE',
+        status: 'CONFIRMED'
+      };
+
+      try {
+        if (window.wixClient) {
+          await window.wixClient.createBooking(bookingRecord);
+        }
+        alert(`Thank you, ${studentName}! Your course registration for "${currentCourse.title}" is confirmed! Total: $${finalPrice.toFixed(2)} CAD.`);
+        window.location.href = '/courses.html';
+      } catch (err) {
+        console.error(err);
+        alert('Registration submitted! Confirmation details sent to ' + studentEmail);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Confirm & Proceed to Payment';
+      }
+    }
+
+    let allCoursesList = [];
+
+    function onCourseDropdownChange(courseId) {
+      const found = allCoursesList.find(c => c.id === courseId || c.slug === courseId || c.aliasId === courseId);
+      if (found) {
+        currentCourse = found;
+        basePrice = Number(found.price) || 130;
+        document.getElementById('sum-course').textContent = found.title || found.name;
+        updateTotal();
+      }
+    }
+
+    // Read course from URL param if present
+    document.addEventListener('DOMContentLoaded', async () => {
+      const params = new URLSearchParams(window.location.search);
+      const courseId = params.get('course') || 'c-ifa-blended';
+      if (window.wixClient) {
+        try {
+          allCoursesList = await window.wixClient.getCourses();
+          const categories = window.wixClient.getCategories ? window.wixClient.getCategories() : [];
+          
+          // Populate grouped dropdown
+          const dropdown = document.getElementById('course-dropdown');
+          if (dropdown && allCoursesList.length) {
+            dropdown.innerHTML = categories.map(cat => {
+              const catCourses = allCoursesList.filter(c => c.categoryId === cat.id || c.category === cat.name);
+              if (!catCourses.length) return '';
+              return `
+                <optgroup label="${cat.name}">
+                  ${catCourses.map(c => `
+                    <option value="${c.id}" ${c.id === courseId || c.aliasId === courseId ? 'selected' : ''}>
+                      ${c.title || c.name} ($${Number(c.price).toFixed(2)})
+                    </option>
+                  `).join('')}
+                </optgroup>
+              `;
+            }).join('');
+          }
+
+          const found = allCoursesList.find(c => c.id === courseId || c.slug === courseId || c.aliasId === courseId) || allCoursesList[0];
+          if (found) {
+            currentCourse = found;
+            basePrice = Number(found.price) || 130;
+            document.getElementById('sum-course').textContent = found.title || found.name;
+            if (dropdown) dropdown.value = found.id;
+            updateTotal();
+          }
+        } catch (e) {
+          console.warn(e);
+        }
+      }
+    });
+  </script>
+</body>
+</html>

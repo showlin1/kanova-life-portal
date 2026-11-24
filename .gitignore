@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Production build
+dist/
+
+# Environment
+.env
+.env.local
+
+# Wix / Editor cache
+.wix/
+
+# OS files
+Thumbs.db
+.DS_Store

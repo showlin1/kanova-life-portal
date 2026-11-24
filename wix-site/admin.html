@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Kanova Life Course &amp; Coupon Management</title>
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    .admin-layout { display: flex; min-height: 100vh; }
+    .admin-sidebar { width: 260px; background: #0b1329; color: #fff; padding: 24px 16px; flex-shrink: 0; display: flex; flex-direction: column; }
+    .admin-main { flex: 1; padding: 36px 40px; background: #f8fafc; overflow-y: auto; }
+    .admin-nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 8px; font-size: 0.9rem; font-weight: 600; color: #94a3b8; cursor: pointer; margin-bottom: 4px; transition: all 0.2s; user-select: none; }
+    .admin-nav-item:hover, .admin-nav-item.active { background: #111d3f; color: #fff; }
+    .admin-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 24px; box-shadow: var(--shadow); margin-bottom: 24px; }
+    .admin-stat-num { font-size: 2rem; font-weight: 800; color: var(--secondary); margin: 6px 0; }
+    .table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+    .table th, .table td { padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: left; font-size: 0.9rem; }
+    .table th { background: #f8fafc; font-weight: 700; color: var(--text-muted); }
+    .table tr:hover { background: #f8fafc; }
+    .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; }
+    .status-badge.confirmed { background: #dcfce7; color: #16a34a; }
+    .status-badge.pending { background: #fef3c7; color: #d97706; }
+    .tab-section { display: none; }
+    .tab-section.active { display: block; }
+    
+    /* Modal */
+    .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(11, 19, 41, 0.6); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+    .modal-backdrop.open { display: flex; }
+    .modal-box { background: #fff; border-radius: 14px; max-width: 520px; width: 92%; padding: 28px; box-shadow: var(--shadow-lg); }
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 0.85rem; font-weight: 700; color: #334155; margin-bottom: 6px; }
+    .form-input, .form-select, .form-textarea { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; font-family: inherit; }
+    .form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: var(--primary); }
+  </style>
+</head>
+<body>
+  <div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <div class="brand" style="color: #fff; margin-bottom: 32px;">
+        <span class="brand-plus">+</span>
+        <span>Kanova Admin</span>
+      </div>
+      <div class="admin-nav-item active" onclick="switchTab('overview', this)">&#x1F4CA; Dashboard Overview</div>
+      <div class="admin-nav-item" onclick="switchTab('courses', this)">&#x1F4D6; Course Management</div>
+      <div class="admin-nav-item" onclick="switchTab('promos', this)">&#x1F3F7;&#xFE0F; Promo Codes</div>
+      <div class="admin-nav-item" onclick="switchTab('bookings', this)">&#x1F4B3; Bookings &amp; Payments</div>
+      
+      <div style="margin-top: auto; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.1);">
+        <div style="font-size: 0.78rem; color: #10b981; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
+          Wix CMS Connected
+        </div>
+        <a href="/" style="font-size: 0.85rem; color: #94a3b8; display: inline-flex; align-items: center; gap: 6px;">
+          &larr; Back to public site
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="admin-main">
+      
+      <!-- Top Bar -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
+        <div>
+          <h1 id="page-title" style="font-size: 1.85rem; font-weight: 800; color: var(--secondary);">Dashboard Overview</h1>
+          <p id="page-sub" style="color: var(--text-muted); font-size: 0.95rem;">Monitor live course enrollments, active promo codes, and Wix CMS databases.</p>
+        </div>
+        <div style="display: flex; gap: 12px;">
+          <button class="btn btn-outline" style="color: #0b1329; border-color: var(--border);" onclick="refreshAllData()">&#x21BB; Refresh Data</button>
+          <a href="/book.html" class="btn btn-primary btn-sm">+ New Booking</a>
+        </div>
+      </div>
+
+      <!-- TAB 1: OVERVIEW -->
+      <div id="tab-overview" class="tab-section active">
+        <!-- Stats Grid -->
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 32px;">
+          <div class="admin-card">
+            <div style="font-size: 0.82rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">TOTAL REVENUE</div>
+            <div class="admin-stat-num" id="stat-revenue" style="color: var(--primary);">$0.00</div>
+            <div style="font-size: 0.8rem; color: #16a34a; font-weight: 600;">Live Wix CMS bookings</div>
+          </div>
+          <div class="admin-card">
+            <div style="font-size: 0.82rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">TOTAL PARTICIPANTS</div>
+            <div class="admin-stat-num" id="stat-participants">0</div>
+            <div style="font-size: 0.8rem; color: #16a34a; font-weight: 600;">Registered students</div>
+          </div>
+          <div class="admin-card">
+            <div style="font-size: 0.82rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">ACTIVE COURSES</div>
+            <div class="admin-stat-num" id="stat-courses">0</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">Synced from Wix Database</div>
+          </div>
+          <div class="admin-card">
+            <div style="font-size: 0.82rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">ACTIVE COUPONS</div>
+            <div class="admin-stat-num" id="stat-coupons" style="color: #0284c7;">0</div>
+            <div style="font-size: 0.8rem; color: #16a34a; font-weight: 600;">Discount codes active</div>
+          </div>
+        </div>
+
+        <!-- Recent Bookings Card -->
+        <div class="admin-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="font-size: 1.2rem; font-weight: 700;">Recent Registrations</h3>
+            <span style="font-size: 0.85rem; color: var(--text-muted);">Loaded live from Wix CMS</span>
+          </div>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Ref</th>
+                <th>Participant</th>
+                <th>Course</th>
+                <th>Date</th>
+                <th>Location</th>
+                <th>Amount</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="overview-bookings-tbody">
+              <tr><td colspan="7" style="text-align:center; padding: 24px; color: var(--text-muted);">Loading registrations from Wix CMS...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB 2: COURSE MANAGEMENT -->
+      <div id="tab-courses" class="tab-section">
+        <div class="admin-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <div>
+              <h3 style="font-size: 1.25rem; font-weight: 700;">Courses Database (Wix CMS)</h3>
+              <p style="color: var(--text-muted); font-size: 0.9rem;">Course cards on the homepage and courses page update automatically from this collection.</p>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="openAddCourseModal()">+ Add New Course</button>
+          </div>
+
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Course Name</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Duration</th>
+                <th>Format</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="courses-tbody">
+              <tr><td colspan="6" style="text-align: center; padding: 24px; color: var(--text-muted);">Loading courses from Wix CMS...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB 3: PROMO CODES -->
+      <div id="tab-promos" class="tab-section">
+        <div class="admin-card" style="margin-bottom: 24px;">
+          <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 16px;">Create New Promo / Coupon Code</h3>
+          <form id="add-coupon-form" onsubmit="handleCreateCoupon(event)" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; align-items: flex-end;">
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label">Coupon Code (e.g. SAVE20)</label>
+              <input type="text" id="coupon-code" class="form-input" placeholder="WINTER20" required style="text-transform: uppercase;">
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label">Discount Value</label>
+              <input type="number" id="coupon-value" class="form-input" placeholder="20" required min="1">
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label">Discount Type</label>
+              <select id="coupon-type" class="form-select">
+                <option value="PERCENT">Percentage (%)</option>
+                <option value="FIXED">Fixed Amount ($)</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label">Min Course Price ($)</label>
+              <input type="number" id="coupon-min" class="form-input" value="0" min="0">
+            </div>
+            <button type="submit" class="btn btn-primary" style="height: 44px;">Add Coupon</button>
+          </form>
+        </div>
+
+        <div class="admin-card">
+          <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 16px;">Active Promo Codes (Wix CMS)</h3>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Coupon Code</th>
+                <th>Discount</th>
+                <th>Type</th>
+                <th>Min Order</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="coupons-tbody">
+              <tr><td colspan="6" style="text-align: center; padding: 24px; color: var(--text-muted);">Loading coupons from Wix CMS...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB 4: BOOKINGS & REGISTRATIONS -->
+      <div id="tab-bookings" class="tab-section">
+        <div class="admin-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <div>
+              <h3 style="font-size: 1.25rem; font-weight: 700;">Student Registrations &amp; Bookings</h3>
+              <p style="color: var(--text-muted); font-size: 0.9rem;">Real-time booking records submitted through the course booking flow.</p>
+            </div>
+            <button class="btn btn-outline" style="color: #0b1329; border-color: var(--border);" onclick="refreshAllData()">&#x21BB; Refresh</button>
+          </div>
+
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Booking Ref</th>
+                <th>Participant Name</th>
+                <th>Email / Phone</th>
+                <th>Course</th>
+                <th>Date &amp; Venue</th>
+                <th>Total Paid</th>
+                <th>Coupon</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="bookings-tbody">
+              <tr><td colspan="8" style="text-align:center; padding: 24px; color: var(--text-muted);">Loading registrations...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Add Course Modal -->
+  <div class="modal-backdrop" id="add-course-modal">
+    <div class="modal-box">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--secondary);">Add Course to Wix CMS</h3>
+        <button type="button" onclick="closeAddCourseModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+      </div>
+      <form id="add-course-form" onsubmit="handleCreateCourse(event)">
+        <div class="form-group">
+          <label class="form-label">Course Title</label>
+          <input type="text" id="modal-course-title" class="form-input" placeholder="e.g. Standard First Aid & CPR/AED Level C" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select id="modal-course-category" class="form-select" required>
+            <option value="Intermediate First Aid Courses">Intermediate First Aid Courses</option>
+            <option value="Basic First Aid Courses">Basic First Aid Courses</option>
+            <option value="CPR Courses">CPR Courses</option>
+            <option value="Basic Life Support (BLS) Courses">Basic Life Support (BLS) Courses</option>
+            <option value="Marine First Aid Courses">Marine First Aid Courses</option>
+            <option value="Mask Fit Testing">Mask Fit Testing</option>
+            <option value="Child Care First Aid">Child Care First Aid</option>
+          </select>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div class="form-group">
+            <label class="form-label">Price (CAD $)</label>
+            <input type="number" id="modal-course-price" class="form-input" placeholder="165" required min="10">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Category Badge</label>
+            <input type="text" id="modal-course-badge" class="form-input" placeholder="First Aid, CPR, BLS" required>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div class="form-group">
+            <label class="form-label">Duration</label>
+            <input type="text" id="modal-course-duration" class="form-input" placeholder="2 Days (14-16 hrs)" value="2 Days">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Training Format</label>
+            <input type="text" id="modal-course-format" class="form-input" placeholder="Blended / In-Person" value="Blended (Online + In-Class)">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Course Description</label>
+          <textarea id="modal-course-desc" class="form-textarea" rows="3" placeholder="Comprehensive training covering life-saving emergency first aid and CPR..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Image URL (Optional)</label>
+          <input type="url" id="modal-course-image" class="form-input" placeholder="https://static.wixstatic.com/media/...">
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+          <button type="button" class="btn btn-outline" style="color: #0b1329; border-color: var(--border);" onclick="closeAddCourseModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btn-save-course">Save to Wix CMS</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/wix-client.js"></script>
+  <script>
+    let globalCourses = [];
+    let globalCoupons = [];
+    let globalBookings = [];
+
+    function switchTab(tabName, element) {
+      document.querySelectorAll('.admin-nav-item').forEach(el => el.classList.remove('active'));
+      if (element) element.classList.add('active');
+
+      document.querySelectorAll('.tab-section').forEach(sec => sec.classList.remove('active'));
+      const activeSection = document.getElementById('tab-' + tabName);
+      if (activeSection) activeSection.classList.add('active');
+
+      const titleEl = document.getElementById('page-title');
+      const subEl = document.getElementById('page-sub');
+      if (tabName === 'overview') {
+        titleEl.textContent = 'Dashboard Overview';
+        subEl.textContent = 'Monitor live course enrollments, active promo codes, and Wix CMS databases.';
+      } else if (tabName === 'courses') {
+        titleEl.textContent = 'Course Management';
+        subEl.textContent = 'Add, edit, or remove courses synced in real-time with Wix CMS database.';
+      } else if (tabName === 'promos') {
+        titleEl.textContent = 'Promo & Coupon Codes';
+        subEl.textContent = 'Manage promotional discounts and special offers for student bookings.';
+      } else if (tabName === 'bookings') {
+        titleEl.textContent = 'Bookings & Payments';
+        subEl.textContent = 'Complete log of registered students and confirmed training sessions.';
+      }
+    }
+
+    async function refreshAllData() {
+      try {
+        if (!window.wixClient) return;
+
+        // Fetch courses, coupons, bookings in parallel
+        const [courses, coupons, bookings] = await Promise.all([
+          window.wixClient.getCourses(),
+          window.wixClient.getCoupons(),
+          window.wixClient.getBookings()
+        ]);
+
+        globalCourses = courses || [];
+        globalCoupons = coupons || [];
+        globalBookings = bookings || [];
+
+        renderOverview();
+        renderCourses();
+        renderCoupons();
+        renderBookings();
+      } catch (err) {
+        console.error('Failed to refresh data from Wix CMS:', err);
+      }
+    }
+
+    function renderOverview() {
+      document.getElementById('stat-courses').textContent = globalCourses.length;
+      document.getElementById('stat-coupons').textContent = globalCoupons.length;
+      document.getElementById('stat-participants').textContent = globalBookings.length;
+
+      let totalRevenue = 0;
+      globalBookings.forEach(b => {
+        totalRevenue += Number(b.amountPaid || b.coursePrice || 0);
+      });
+      document.getElementById('stat-revenue').textContent = '$' + totalRevenue.toFixed(2);
+
+      const overviewTbody = document.getElementById('overview-bookings-tbody');
+      if (!globalBookings.length) {
+        overviewTbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 24px; color: var(--text-muted);">No student bookings recorded yet in Wix CMS.</td></tr>';
+        return;
+      }
+
+      overviewTbody.innerHTML = globalBookings.slice(0, 5).map(b => `
+        <tr>
+          <td><strong>${b.ref || ('KL-' + (b.id ? b.id.slice(0, 6).toUpperCase() : 'REC'))}</strong></td>
+          <td>${b.fullName || b.participantName || 'Student'}</td>
+          <td>${b.courseTitle || 'Training Course'}</td>
+          <td>${b.sessionDate || 'Upcoming'}</td>
+          <td>${b.venue || b.location || 'Thunder Bay'}</td>
+          <td><strong>$${Number(b.amountPaid || b.coursePrice || 0).toFixed(2)}</strong></td>
+          <td><span class="status-badge ${b.status === 'CONFIRMED' || !b.status ? 'confirmed' : 'pending'}">${b.status || 'CONFIRMED'}</span></td>
+        </tr>
+      `).join('');
+    }
+
+    function renderCourses() {
+      const tbody = document.getElementById('courses-tbody');
+      if (!globalCourses.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 24px;">No courses found in Wix CMS.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = globalCourses.map(c => `
+        <tr>
+          <td>
+            <strong>${c.title || c.name}</strong>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">${c.slug || ''}</div>
+          </td>
+          <td><span style="background: #e0f2fe; color: #0369a1; padding: 3px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600;">${c.category || 'General'}</span></td>
+          <td><strong>$${Number(c.price || 0).toFixed(2)}</strong></td>
+          <td>${c.duration || 'N/A'}</td>
+          <td>${c.format || 'In-Person'}</td>
+          <td>
+            <button class="btn btn-outline btn-sm" style="color: #dc2626; border-color: #fca5a5;" onclick="deleteCourse('${c.id}')">Delete</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function renderCoupons() {
+      const tbody = document.getElementById('coupons-tbody');
+      if (!globalCoupons.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 24px;">No coupon codes created in Wix CMS yet.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = globalCoupons.map(cp => `
+        <tr>
+          <td><strong style="color: #0284c7; font-size: 1rem; letter-spacing: 0.05em;">${cp.code}</strong></td>
+          <td>${cp.discountType === 'PERCENT' ? cp.discountValue + '%' : '$' + Number(cp.discountValue).toFixed(2)}</td>
+          <td>${cp.discountType === 'PERCENT' ? 'Percentage' : 'Fixed Amount'}</td>
+          <td>${cp.minAmount ? '$' + cp.minAmount : 'None'}</td>
+          <td><span class="status-badge confirmed">ACTIVE</span></td>
+          <td>
+            <button class="btn btn-outline btn-sm" style="color: #dc2626; border-color: #fca5a5;" onclick="deleteCoupon('${cp.id}')">Delete</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function renderBookings() {
+      const tbody = document.getElementById('bookings-tbody');
+      if (!globalBookings.length) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 24px; color: var(--text-muted);">No student registrations found in Wix CMS.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = globalBookings.map(b => `
+        <tr>
+          <td><strong>${b.ref || ('KL-' + (b.id ? b.id.slice(0, 6).toUpperCase() : 'REC'))}</strong></td>
+          <td>
+            <strong>${b.fullName || b.participantName || 'Participant'}</strong>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">${b.city || ''}</div>
+          </td>
+          <td>
+            <div>${b.email || 'N/A'}</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">${b.phone || ''}</div>
+          </td>
+          <td>${b.courseTitle || 'Training Course'}</td>
+          <td>
+            <div>${b.sessionDate || 'Selected Date'}</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">${b.venue || b.location || ''}</div>
+          </td>
+          <td><strong>$${Number(b.amountPaid || b.coursePrice || 0).toFixed(2)}</strong></td>
+          <td>${b.couponCode ? '<span style="color:#0284c7; font-weight:700;">' + b.couponCode + ' (-$' + Number(b.discountAmount || 0).toFixed(2) + ')</span>' : '<span style="color: var(--text-muted);">-</span>'}</td>
+          <td><span class="status-badge ${b.status === 'CONFIRMED' || !b.status ? 'confirmed' : 'pending'}">${b.status || 'CONFIRMED'}</span></td>
+        </tr>
+      `).join('');
+    }
+
+    // Handlers
+    function openAddCourseModal() {
+      document.getElementById('add-course-modal').classList.add('open');
+    }
+
+    function closeAddCourseModal() {
+      document.getElementById('add-course-modal').classList.remove('open');
+    }
+
+    async function handleCreateCourse(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btn-save-course');
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
+
+      const title = document.getElementById('modal-course-title').value;
+      const price = parseFloat(document.getElementById('modal-course-price').value) || 0;
+      const badge = document.getElementById('modal-course-badge').value;
+      const category = document.getElementById('modal-course-category').value;
+      const duration = document.getElementById('modal-course-duration').value;
+      const format = document.getElementById('modal-course-format').value;
+      const description = document.getElementById('modal-course-desc').value;
+      const imageUrl = document.getElementById('modal-course-image').value || 'https://static.wixstatic.com/media/2c3d7b_39839bc5388e4600b74859f9a2c7f3a1~mv2.jpg';
+      const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+      try {
+        await window.wixClient.addCourse({
+          title,
+          category,
+          price,
+          badge,
+          duration,
+          format,
+          description,
+          imageUrl,
+          slug,
+          certification: 'Canadian Red Cross Valid 3 Years'
+        });
+        closeAddCourseModal();
+        document.getElementById('add-course-form').reset();
+        await refreshAllData();
+        alert('Course successfully added to Wix CMS database!');
+      } catch (err) {
+        alert('Failed to save course to Wix CMS: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save to Wix CMS';
+      }
+    }
+
+    async function deleteCourse(id) {
+      if (!confirm('Are you sure you want to delete this course from Wix CMS?')) return;
+      try {
+        await window.wixClient.deleteCourse(id);
+        await refreshAllData();
+      } catch (err) {
+        alert('Error deleting course: ' + err.message);
+      }
+    }
+
+    async function handleCreateCoupon(e) {
+      e.preventDefault();
+      const code = document.getElementById('coupon-code').value.trim().toUpperCase();
+      const discountValue = parseFloat(document.getElementById('coupon-value').value) || 0;
+      const discountType = document.getElementById('coupon-type').value;
+      const minAmount = parseFloat(document.getElementById('coupon-min').value) || 0;
+
+      try {
+        await window.wixClient.addCoupon({
+          code,
+          discountValue,
+          discountType,
+          minAmount,
+          active: true
+        });
+        document.getElementById('add-coupon-form').reset();
+        await refreshAllData();
+        alert('Coupon ' + code + ' successfully created in Wix CMS!');
+      } catch (err) {
+        alert('Failed to create coupon: ' + err.message);
+      }
+    }
+
+    async function deleteCoupon(id) {
+      if (!confirm('Delete this coupon code?')) return;
+      try {
+        await window.wixClient.deleteCoupon(id);
+        await refreshAllData();
+      } catch (err) {
+        alert('Error deleting coupon: ' + err.message);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', refreshAllData);
+  </script>
+</body>
+</html>

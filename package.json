@@ -1,0 +1,13 @@
+{
+  "name": "kanova-life-wix-site",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Kanova Life - Wix Headless Course Booking Site",
+  "scripts": {
+    "start": "node server.cjs",
+    "dev": "node server.cjs",
+    "build": "node build.cjs",
+    "preview": "node server.cjs dist",
+    "serve": "node server.cjs"
+  }
+}
