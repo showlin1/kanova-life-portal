@@ -776,34 +776,75 @@
       });
     }
 
+    function renderHomeCourseCard(course) {
+      const title = course.title || course.name;
+      const price = Number(course.price) || 0;
+      const priceDisplay = course.isComingSoon ? `$${price.toFixed(2)} (Coming Soon)` : `$${price.toFixed(2)}`;
+      const badge = course.badge || (course.isComingSoon ? 'Coming Soon' : 'Certified');
+      const img = course.imageUrl || '/images/course-1.jpg';
+      const detailUrl = `/course-detail.html?course=${course.id || course.slug}`;
+
+      return `
+        <div class="course-card">
+          <div class="course-img-wrapper">
+            <img src="${img}" alt="${title}" class="course-img" loading="lazy" />
+          </div>
+          <div class="course-body">
+            <span class="badge-pill">${badge}</span>
+            <h4 class="course-name">${title}</h4>
+            <div class="course-footer">
+              <span class="course-price">${priceDisplay}</span>
+              <a href="${detailUrl}" class="course-link">Learn More &rarr;</a>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
     async function loadDynamicCourses() {
       try {
         if (!window.wixClient) return;
         const courses = await window.wixClient.getCourses();
         if (!courses || !courses.length) return;
-        const container = document.getElementById('courses-container');
+
+        const categories = window.wixClient.getCategories ? window.wixClient.getCategories() : [];
+        const container = document.getElementById('home-courses-container');
         if (!container) return;
 
-        const sorted = sortCourses(courses);
-        container.innerHTML = sorted.map((c, i) => {
-          const img = getCourseImage(c.title || c.name, i);
-          const price = Number(c.price) || 130;
-          const id = c.id || c.slug || ('c' + (i + 1));
+        const groupsHtml = categories.map(cat => {
+          const catCourses = courses.filter(c => 
+            c.categoryId === cat.id || 
+            c.category === cat.name || 
+            (c.category && cat.shortName && c.category.toLowerCase().includes(cat.shortName.toLowerCase()))
+          );
+          if (!catCourses.length) return '';
+
+          const noteHtml = cat.note ? `
+            <div class="category-note">
+              <strong>Notice:</strong> ${cat.note}
+            </div>
+          ` : '';
+
           return `
-            <div class="course-card">
-              <div class="course-img-wrapper">
-                <img src="${img}" alt="${c.title || c.name}" class="course-img" />
-              </div>
-              <div class="course-body">
-                <h3 class="course-name">${c.title || c.name}</h3>
-                <div class="course-footer">
-                  <span class="course-price">$${price.toFixed(2)}</span>
-                  <a href="/course-detail.html?course=${id}" class="course-link">Learn More &rarr;</a>
+            <div class="category-group" id="home-${cat.id}" data-category="${cat.id}">
+              <div class="category-header">
+                <div class="category-title-row">
+                  <h3 class="category-title">
+                    <span>${cat.isComingSoon ? '&#x23F3;' : '&#x1F4CB;'}</span> ${cat.name}
+                  </h3>
                 </div>
+                ${noteHtml}
+              </div>
+              <div class="course-grid">
+                ${catCourses.map(renderHomeCourseCard).join('')}
               </div>
             </div>
           `;
-        }).join('');
+        }).filter(Boolean).join('');
+
+        if (groupsHtml) {
+          container.innerHTML = groupsHtml;
+        }
       } catch (e) {
         console.warn('Wix CMS dynamic courses load error', e);
       }

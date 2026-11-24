@@ -531,7 +531,8 @@
 
       let totalRevenue = 0;
       globalBookings.forEach(b => {
-        totalRevenue += Number(b.amountPaid || b.coursePrice || 0);
+        const amt = Number(b.finalPrice !== undefined ? b.finalPrice : (b.price !== undefined ? b.price : (b.amountPaid || b.coursePrice || 0)));
+        totalRevenue += amt;
       });
       document.getElementById('stat-revenue').textContent = '$' + totalRevenue.toFixed(2);
 
@@ -541,17 +542,23 @@
         return;
       }
 
-      overviewTbody.innerHTML = globalBookings.slice(0, 5).map(b => `
+      overviewTbody.innerHTML = globalBookings.slice(0, 5).map(b => {
+        const name = b.studentName || b.fullName || b.participantName || 'Student';
+        const date = b.date || b.sessionDate || 'Upcoming';
+        const loc = b.location || b.venue || 'Thunder Bay';
+        const price = Number(b.finalPrice !== undefined ? b.finalPrice : (b.price !== undefined ? b.price : (b.amountPaid || b.coursePrice || 0)));
+        return `
         <tr>
           <td><strong>${b.ref || ('KL-' + (b.id ? b.id.slice(0, 6).toUpperCase() : 'REC'))}</strong></td>
-          <td>${b.fullName || b.participantName || 'Student'}</td>
+          <td>${name}</td>
           <td>${b.courseTitle || 'Training Course'}</td>
-          <td>${b.sessionDate || 'Upcoming'}</td>
-          <td>${b.venue || b.location || 'Thunder Bay'}</td>
-          <td><strong>$${Number(b.amountPaid || b.coursePrice || 0).toFixed(2)}</strong></td>
+          <td>${date}</td>
+          <td>${loc}</td>
+          <td><strong>$${price.toFixed(2)}</strong></td>
           <td><span class="status-badge ${b.status === 'CONFIRMED' || !b.status ? 'confirmed' : 'pending'}">${b.status || 'CONFIRMED'}</span></td>
         </tr>
-      `).join('');
+      `;
+      }).join('');
     }
 
     function renderCourses() {
@@ -606,27 +613,37 @@
         return;
       }
 
-      tbody.innerHTML = globalBookings.map(b => `
+      tbody.innerHTML = globalBookings.map(b => {
+        const name = b.studentName || b.fullName || b.participantName || 'Participant';
+        const email = b.studentEmail || b.email || 'N/A';
+        const phone = b.studentPhone || b.phone || '';
+        const date = b.date || b.sessionDate || 'Selected Date';
+        const loc = b.location || b.venue || '';
+        const price = Number(b.finalPrice !== undefined ? b.finalPrice : (b.price !== undefined ? b.price : (b.amountPaid || b.coursePrice || 0)));
+        const discount = Number(b.discount !== undefined ? b.discount : (b.discountAmount || 0));
+
+        return `
         <tr>
           <td><strong>${b.ref || ('KL-' + (b.id ? b.id.slice(0, 6).toUpperCase() : 'REC'))}</strong></td>
           <td>
-            <strong>${b.fullName || b.participantName || 'Participant'}</strong>
+            <strong>${name}</strong>
             <div style="font-size: 0.8rem; color: var(--text-muted);">${b.city || ''}</div>
           </td>
           <td>
-            <div>${b.email || 'N/A'}</div>
-            <div style="font-size: 0.8rem; color: var(--text-muted);">${b.phone || ''}</div>
+            <div>${email}</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">${phone}</div>
           </td>
           <td>${b.courseTitle || 'Training Course'}</td>
           <td>
-            <div>${b.sessionDate || 'Selected Date'}</div>
-            <div style="font-size: 0.8rem; color: var(--text-muted);">${b.venue || b.location || ''}</div>
+            <div>${date}</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">${loc}</div>
           </td>
-          <td><strong>$${Number(b.amountPaid || b.coursePrice || 0).toFixed(2)}</strong></td>
-          <td>${b.couponCode ? '<span style="color:#0284c7; font-weight:700;">' + b.couponCode + ' (-$' + Number(b.discountAmount || 0).toFixed(2) + ')</span>' : '<span style="color: var(--text-muted);">-</span>'}</td>
+          <td><strong>$${price.toFixed(2)}</strong></td>
+          <td>${b.couponCode && b.couponCode !== 'NONE' ? '<span style="color:#0284c7; font-weight:700;">' + b.couponCode + ' (-$' + discount.toFixed(2) + ')</span>' : '<span style="color: var(--text-muted);">-</span>'}</td>
           <td><span class="status-badge ${b.status === 'CONFIRMED' || !b.status ? 'confirmed' : 'pending'}">${b.status || 'CONFIRMED'}</span></td>
         </tr>
-      `).join('');
+      `;
+      }).join('');
     }
 
     // Handlers

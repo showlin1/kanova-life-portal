@@ -45,8 +45,9 @@ class WixClient {
 
   async fetchApi(endpoint, options = {}) {
     const token = await this.getToken();
+    const authHeader = (token && token.startsWith('Bearer ')) || token === 'anonymous' ? token : `Bearer ${token}`;
     const headers = {
-      'Authorization': token,
+      'Authorization': authHeader,
       'Content-Type': 'application/json',
       'wix-site-id': WIX_CONFIG.siteId,
       ...(options.headers || {})
@@ -69,16 +70,18 @@ class WixClient {
           }
         })
       });
-      const data = await res.json();
-      if (data.dataItems && data.dataItems.length > 0) {
-        return data.dataItems.map(item => ({
-          id: item.id,
-          ...item.data
-        }));
+      if (res.ok) {
+        const data = await res.json();
+        if (data.dataItems && data.dataItems.length > 0) {
+          return data.dataItems.map(item => ({
+            id: item.id,
+            ...item.data
+          }));
+        }
       }
       return this.getDefaultCourses();
     } catch (e) {
-      console.error('Error fetching courses from Wix CMS:', e);
+      console.warn('Error fetching courses from Wix CMS, using default catalog:', e);
       return this.getDefaultCourses();
     }
   }
@@ -287,12 +290,13 @@ class WixClient {
         title: "Intermediate First Aid CPR/AED Level C (Blended)",
         name: "Intermediate First Aid CPR/AED Level C (Blended)",
         slug: "intermediate-first-aid-cpr-aed-level-c-blended",
-        price: 110,
+        price: 145,
         imageUrl: "/images/course-2.jpg",
         duration: "Blended (Online + 1 Day In-Class)",
         format: "Blended (Online + In-Class)",
         certification: "3-Year WSIB Recognized",
         badge: "Blended",
+        isComingSoon: false,
         description: "Comprehensive Canadian Red Cross Intermediate First Aid training combining self-paced online theory and hands-on skills."
       },
       {
@@ -304,12 +308,13 @@ class WixClient {
         title: "Intermediate First Aid CPR/AED Level C Recertification",
         name: "Intermediate First Aid CPR/AED Level C Recertification",
         slug: "intermediate-first-aid-cpr-aed-level-c-recertification",
-        price: 130,
+        price: 110,
         imageUrl: "/images/course-1.jpg",
         duration: "1 Day (6-8 hrs)",
         format: "In-Person Classroom",
         certification: "3-Year WSIB Recognized",
         badge: "Recertification",
+        isComingSoon: false,
         description: "Canadian Red Cross Intermediate First Aid Recertification course for individuals renewing valid credentials."
       },
       {
@@ -321,12 +326,13 @@ class WixClient {
         title: "Intermediate First Aid CPR/AED Level C (2-Day In-Person)",
         name: "Intermediate First Aid CPR/AED Level C (2-Day In-Person)",
         slug: "intermediate-first-aid-cpr-aed-level-c-2-day",
-        price: 130,
+        price: 165,
         imageUrl: "/images/course-3.jpg",
         duration: "2 Days (14-16 hrs)",
         format: "In-Person Classroom",
         certification: "3-Year WSIB Recognized",
         badge: "2-Day In-Person",
+        isComingSoon: false,
         description: "Comprehensive two-day Canadian Red Cross certification covering first aid, CPR/AED protocols, and workplace emergency response."
       },
 
@@ -340,12 +346,13 @@ class WixClient {
         title: "Basic First Aid CPR/AED Level C (Blended)",
         name: "Basic First Aid CPR/AED Level C (Blended)",
         slug: "basic-first-aid-cpr-aed-level-c-blended",
-        price: 130,
+        price: 105,
         imageUrl: "/images/course-5.jpg",
         duration: "Blended (Online + Half Day In-Class)",
         format: "Blended (Online + In-Class)",
         certification: "3-Year WSIB Recognized",
         badge: "Blended",
+        isComingSoon: false,
         description: "Flexible basic first aid and CPR Level C training with online modules and an in-person practical skills session."
       },
       {
@@ -357,12 +364,13 @@ class WixClient {
         title: "Basic First Aid CPR/AED Level C (1-Day In-Person)",
         name: "Basic First Aid CPR/AED Level C (1-Day In-Person)",
         slug: "basic-first-aid-cpr-aed-level-c-1-day",
-        price: 130,
+        price: 115,
         imageUrl: "/images/course-4.jpg",
         duration: "1 Day (6.5-8 hrs)",
         format: "In-Person Classroom",
         certification: "3-Year WSIB Recognized",
         badge: "1-Day In-Person",
+        isComingSoon: false,
         description: "Practical one-day course covering essential life-saving first aid skills and CPR/AED for workplace compliance."
       },
 
@@ -371,6 +379,7 @@ class WixClient {
         id: "c-cpr-blended",
         categoryId: "cat-cpr",
         category: "CPR Courses",
+        categoryNote: "",
         title: "CPR/AED Level C (Blended)",
         name: "CPR/AED Level C (Blended)",
         slug: "cpr-aed-level-c-blended",
@@ -380,21 +389,24 @@ class WixClient {
         format: "Blended (Online + In-Class)",
         certification: "3-Year WSIB Recognized",
         badge: "Blended",
+        isComingSoon: false,
         description: "CPR and AED Level C covering adult, child, and infant resuscitation skills and choking relief protocols."
       },
       {
         id: "c-cpr-recert",
         categoryId: "cat-cpr",
         category: "CPR Courses",
+        categoryNote: "",
         title: "CPR/AED Level C Recertification",
         name: "CPR/AED Level C Recertification",
         slug: "cpr-aed-level-c-recertification",
-        price: 65,
+        price: 60,
         imageUrl: "/images/course-2.jpg",
         duration: "Half Day (4 hrs)",
         format: "In-Person Classroom",
         certification: "3-Year WSIB Recognized",
         badge: "Recertification",
+        isComingSoon: false,
         description: "Renew your CPR/AED Level C certification with this practical refresher and skills verification session."
       },
 
@@ -402,7 +414,8 @@ class WixClient {
       {
         id: "c-bls-hcp",
         categoryId: "cat-bls",
-        category: "Basic Life Support (BLS) Courses",
+        category: "Basic Life Support (BLS) Courses (coming soon)",
+        categoryNote: "Registration opening soon for healthcare professionals",
         isComingSoon: true,
         title: "Basic Life Support (CPR-HCP)",
         name: "Basic Life Support (CPR-HCP)",
@@ -418,7 +431,8 @@ class WixClient {
       {
         id: "c-bls-recert",
         categoryId: "cat-bls",
-        category: "Basic Life Support (BLS) Courses",
+        category: "Basic Life Support (BLS) Courses (coming soon)",
+        categoryNote: "Registration opening soon for healthcare professionals",
         isComingSoon: true,
         title: "Basic Life Support (CPR-HCP) Recertification",
         name: "Basic Life Support (CPR-HCP) Recertification",
@@ -438,15 +452,17 @@ class WixClient {
         aliasId: "c7",
         categoryId: "cat-marine",
         category: "Marine First Aid Courses",
+        categoryNote: "",
         title: "Marine Basic First Aid CPR/AED Level C (2-Day)",
         name: "Marine Basic First Aid CPR/AED Level C (2-Day)",
         slug: "marine-basic-first-aid-cpr-aed-level-c-2-day",
-        price: 130,
+        price: 185,
         imageUrl: "/images/course-7.jpg",
         duration: "2 Days (16 hrs)",
         format: "In-Person Maritime",
         certification: "Transport Canada Approved",
         badge: "2-Day Maritime",
+        isComingSoon: false,
         description: "Transport Canada-approved first aid training for mariners, boat crews, and commercial fishing vessels."
       },
 
@@ -454,12 +470,13 @@ class WixClient {
       {
         id: "c-mask-n95",
         categoryId: "cat-mask",
-        category: "Mask Fit Testing",
+        category: "Mask Fit Testing (coming soon)",
+        categoryNote: "Qualitative N95 & Respirator Fit Testing",
         isComingSoon: true,
         title: "N95 Mask Fit Testing (Qualitative)",
         name: "N95 Mask Fit Testing (Qualitative)",
         slug: "n95-mask-fit-testing-qualitative",
-        price: 40,
+        price: 50,
         imageUrl: "/images/course-5.jpg",
         duration: "20-30 mins",
         format: "Qualitative Fit Test",
@@ -470,12 +487,13 @@ class WixClient {
       {
         id: "c-mask-halfface",
         categoryId: "cat-mask",
-        category: "Mask Fit Testing",
+        category: "Mask Fit Testing (coming soon)",
+        categoryNote: "Qualitative N95 & Respirator Fit Testing",
         isComingSoon: true,
         title: "Half-Face Respirator Fit Testing (Qualitative)",
         name: "Half-Face Respirator Fit Testing (Qualitative)",
         slug: "half-face-respirator-fit-testing-qualitative",
-        price: 50,
+        price: 60,
         imageUrl: "/images/course-6.jpg",
         duration: "30 mins",
         format: "Qualitative Fit Test",
@@ -486,12 +504,13 @@ class WixClient {
       {
         id: "c-mask-fullface",
         categoryId: "cat-mask",
-        category: "Mask Fit Testing",
+        category: "Mask Fit Testing (coming soon)",
+        categoryNote: "Qualitative N95 & Respirator Fit Testing",
         isComingSoon: true,
         title: "Full-Face Respirator Fit Testing (Qualitative)",
         name: "Full-Face Respirator Fit Testing (Qualitative)",
         slug: "full-face-respirator-fit-testing-qualitative",
-        price: 60,
+        price: 70,
         imageUrl: "/images/course-7.jpg",
         duration: "30-45 mins",
         format: "Qualitative Fit Test",
@@ -506,15 +525,17 @@ class WixClient {
         aliasId: "c6",
         categoryId: "cat-childcare",
         category: "Child Care First Aid",
+        categoryNote: "",
         title: "Standard Child Care First Aid CPR/AED Level B (2-Day In-Person)",
         name: "Standard Child Care First Aid CPR/AED Level B (2-Day In-Person)",
         slug: "standard-child-care-first-aid-cpr-aed-level-b-2-day",
-        price: 130,
+        price: 155,
         imageUrl: "/images/course-6.jpg",
         duration: "2 Days (14-16 hrs)",
         format: "In-Person Classroom",
         certification: "3-Year WSIB & Child Care Recognized",
         badge: "2-Day Child Care",
+        isComingSoon: false,
         description: "Specialized Canadian Red Cross first aid training designed for daycare educators, school staff, and childcare providers."
       }
     ];
