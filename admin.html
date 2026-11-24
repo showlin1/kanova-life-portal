@@ -402,11 +402,11 @@
     </main>
   </div>
 
-  <!-- Add Course Modal -->
+  <!-- Add/Edit Course Modal -->
   <div class="modal-backdrop" id="add-course-modal">
     <div class="modal-box">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--secondary);">Add Course to Wix CMS</h3>
+        <h3 id="modal-title-text" style="font-size: 1.25rem; font-weight: 800; color: var(--secondary);">Add Course to Wix CMS</h3>
         <button type="button" onclick="closeAddCourseModal()"
           style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">&times;</button>
       </div>
@@ -456,9 +456,13 @@
             placeholder="Comprehensive training covering life-saving emergency first aid and CPR..."></textarea>
         </div>
         <div class="form-group">
-          <label class="form-label">Image URL (Optional)</label>
-          <input type="url" id="modal-course-image" class="form-input"
-            placeholder="https://static.wixstatic.com/media/...">
+          <label class="form-label">Course Image URL</label>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <input type="url" id="modal-course-image" class="form-input"
+              placeholder="https://images.unsplash.com/... or Wix media URL" oninput="updateImagePreview(this.value)">
+            <img id="modal-image-preview" src="" alt="Preview" style="width: 52px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); display: none;" onerror="this.style.display='none'">
+          </div>
+          <small style="color: var(--text-muted); font-size: 0.78rem;">Paste any image link (Wix Media Manager, Unsplash, or web image). Live preview will display on the right.</small>
         </div>
         <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
           <button type="button" class="btn btn-outline" style="color: #0b1329; border-color: var(--border);"
@@ -571,14 +575,20 @@
       tbody.innerHTML = globalCourses.map(c => `
         <tr>
           <td>
-            <strong>${c.title || c.name}</strong>
-            <div style="font-size: 0.8rem; color: var(--text-muted);">${c.slug || ''}</div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <img src="${c.imageUrl || '/images/course-1.jpg'}" alt="" style="width: 44px; height: 34px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border);" onerror="this.src='/images/course-1.jpg'" />
+              <div>
+                <strong>${c.title || c.name}</strong>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">${c.slug || ''}</div>
+              </div>
+            </div>
           </td>
           <td><span style="background: #e0f2fe; color: #0369a1; padding: 3px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600;">${c.category || 'General'}</span></td>
           <td><strong>$${Number(c.price || 0).toFixed(2)}</strong></td>
           <td>${c.duration || 'N/A'}</td>
           <td>${c.format || 'In-Person'}</td>
           <td>
+            <button class="btn btn-outline btn-sm" style="color: #0284c7; border-color: #93c5fd; margin-right: 6px;" onclick="openEditCourseModal('${c.id}')">&#x270E; Edit</button>
             <button class="btn btn-outline btn-sm" style="color: #dc2626; border-color: #fca5a5;" onclick="deleteCourse('${c.id}')">Delete</button>
           </td>
         </tr>
@@ -647,19 +657,60 @@
     }
 
     // Handlers
+    let editingCourseId = null;
+
     function openAddCourseModal() {
+      editingCourseId = null;
+      document.getElementById('modal-title-text').textContent = 'Add Course to Wix CMS';
+      document.getElementById('btn-save-course').textContent = 'Save to Wix CMS';
+      document.getElementById('add-course-form').reset();
+      updateImagePreview('');
       document.getElementById('add-course-modal').classList.add('open');
+    }
+
+    function openEditCourseModal(id) {
+      editingCourseId = id;
+      const c = globalCourses.find(item => item.id === id);
+      if (!c) return;
+
+      document.getElementById('modal-title-text').textContent = 'Edit Course & Image in Wix CMS';
+      document.getElementById('btn-save-course').textContent = 'Update Course';
+
+      document.getElementById('modal-course-title').value = c.title || c.name || '';
+      document.getElementById('modal-course-category').value = c.category || 'Intermediate First Aid Courses';
+      document.getElementById('modal-course-price').value = c.price || 0;
+      document.getElementById('modal-course-badge').value = c.badge || '';
+      document.getElementById('modal-course-duration').value = c.duration || '';
+      document.getElementById('modal-course-format').value = c.format || '';
+      document.getElementById('modal-course-desc').value = c.description || '';
+      document.getElementById('modal-course-image').value = c.imageUrl || '';
+      updateImagePreview(c.imageUrl);
+
+      document.getElementById('add-course-modal').classList.add('open');
+    }
+
+    function updateImagePreview(url) {
+      const img = document.getElementById('modal-image-preview');
+      if (img) {
+        if (url && (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/'))) {
+          img.src = url;
+          img.style.display = 'block';
+        } else {
+          img.style.display = 'none';
+        }
+      }
     }
 
     function closeAddCourseModal() {
       document.getElementById('add-course-modal').classList.remove('open');
+      editingCourseId = null;
     }
 
     async function handleCreateCourse(e) {
       e.preventDefault();
       const btn = document.getElementById('btn-save-course');
       btn.disabled = true;
-      btn.textContent = 'Saving...';
+      btn.textContent = editingCourseId ? 'Updating...' : 'Saving...';
 
       const title = document.getElementById('modal-course-title').value;
       const price = parseFloat(document.getElementById('modal-course-price').value) || 0;
@@ -668,31 +719,50 @@
       const duration = document.getElementById('modal-course-duration').value;
       const format = document.getElementById('modal-course-format').value;
       const description = document.getElementById('modal-course-desc').value;
-      const imageUrl = document.getElementById('modal-course-image').value || 'https://static.wixstatic.com/media/2c3d7b_39839bc5388e4600b74859f9a2c7f3a1~mv2.jpg';
+      const imageUrl = document.getElementById('modal-course-image').value || 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&auto=format&fit=crop&q=60';
       const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
       try {
-        await window.wixClient.addCourse({
-          title,
-          category,
-          price,
-          badge,
-          duration,
-          format,
-          description,
-          imageUrl,
-          slug,
-          certification: 'Canadian Red Cross Valid 3 Years'
-        });
-        closeAddCourseModal();
-        document.getElementById('add-course-form').reset();
-        await refreshAllData();
-        alert('Course successfully added to Wix CMS database!');
+        if (editingCourseId) {
+          const existing = globalCourses.find(c => c.id === editingCourseId) || {};
+          await window.wixClient.updateCourse(editingCourseId, {
+            ...existing,
+            title,
+            category,
+            price,
+            badge,
+            duration,
+            format,
+            description,
+            imageUrl,
+            slug: existing.slug || slug
+          });
+          closeAddCourseModal();
+          await refreshAllData();
+          alert('Course and image successfully updated in Wix CMS!');
+        } else {
+          await window.wixClient.addCourse({
+            title,
+            category,
+            price,
+            badge,
+            duration,
+            format,
+            description,
+            imageUrl,
+            slug,
+            certification: 'Canadian Red Cross Valid 3 Years'
+          });
+          closeAddCourseModal();
+          document.getElementById('add-course-form').reset();
+          await refreshAllData();
+          alert('Course successfully added to Wix CMS database!');
+        }
       } catch (err) {
         alert('Failed to save course to Wix CMS: ' + err.message);
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Save to Wix CMS';
+        btn.textContent = editingCourseId ? 'Update Course' : 'Save to Wix CMS';
       }
     }
 
