@@ -230,6 +230,130 @@ class WixClient {
     }
   }
 
+  // --- BLOGS ---
+  async getBlogs() {
+    try {
+      const res = await this.fetchApi('/wix-data/v2/items/query', {
+        method: 'POST',
+        body: JSON.stringify({
+          dataCollectionId: 'Blogs',
+          query: {
+            paging: { limit: 50 }
+          }
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.dataItems && data.dataItems.length > 0) {
+          return data.dataItems.map(item => ({
+            id: item.id,
+            ...item.data
+          }));
+        }
+      }
+      return this.getDefaultBlogs();
+    } catch (e) {
+      console.warn('Error fetching blogs from Wix CMS, using default list:', e);
+      return this.getDefaultBlogs();
+    }
+  }
+
+  async getBlogBySlug(slugOrId) {
+    const blogs = await this.getBlogs();
+    if (!blogs || !blogs.length) return null;
+    const clean = (slugOrId || '').toLowerCase().trim();
+    return blogs.find(b =>
+      (b.slug && b.slug.toLowerCase() === clean) ||
+      (b.id && b.id.toLowerCase() === clean) ||
+      (b.title && b.title.toLowerCase().replace(/[^a-z0-9]+/g, '-') === clean)
+    ) || blogs[0];
+  }
+
+  getDefaultBlogs() {
+    return [
+      {
+        id: "b1",
+        title: "What to Expect at Your First Aid & CPR Course",
+        slug: "what-to-expect-at-your-first-aid-and-cpr-course",
+        category: "Training Tips",
+        date: "November 20, 2026",
+        author: "Kanova Life Instructors",
+        readTime: "5 min read",
+        imageUrl: "https://static.wixstatic.com/media/0ec70773d1ca4891a636a4623e110cc9.jpg",
+        excerpt: "Never taken a Red Cross course before? Here is how a typical training day runs, from check-in to certification.",
+        content: `Arriving for your first Canadian Red Cross First Aid & CPR/AED course can feel a little intimidating if you’ve never participated in emergency skills training before. At Kanova Life, our goal is to create a welcoming, practical, and highly supportive learning environment where you leave feeling confident and fully prepared to save a life.
+
+### 1. Morning Check-In & Welcome
+When you arrive at our community training center in Thunder Bay, Nipigon, or Terrace Bay, you'll be greeted by your certified Red Cross instructor. You'll sign in, receive your training workbook and reference materials, and get settled at your training station equipped with sanitized equipment.
+
+### 2. Interactive Theory & Real-World Scenarios
+Rather than boring lectures, our training uses multimedia presentations, discussion, and real-world Ontario workplace scenarios. You will explore emergency scene assessment, when and how to call 911, and how to protect yourself with personal protective equipment (PPE).
+
+### 3. Hands-On CPR & AED Practice
+Every participant practices directly on feedback-enabled adult, child, and infant manikins. You will master the rhythm and depth of 30 chest compressions and 2 rescue breaths, alongside automated external defibrillator (AED) operation.
+
+### 4. Comprehensive First Aid Skills
+In the afternoon, you will practice hands-on bandaging, wound packing, tourniquet application, splinting, and auto-injector (EpiPen) administration for severe allergic reactions.
+
+### 5. Knowledge Verification & Digital Certification
+At the end of the day, there is a simple multiple-choice knowledge assessment. Upon successful completion, your official 3-year Canadian Red Cross digital certificate will be issued to your email within 24-48 hours!`
+      },
+      {
+        id: "b2",
+        title: "When Should You Recertify Your First Aid?",
+        slug: "when-should-you-recertify-your-first-aid",
+        category: "Certification",
+        date: "November 15, 2026",
+        author: "Kanova Life Instructors",
+        readTime: "4 min read",
+        imageUrl: "https://static.wixstatic.com/media/2c3d7b_39839bc5388e4600b74859f9a2c7f3a1~mv2.jpg",
+        excerpt: "Red Cross certifications last three years. Learn when a recert course is the right choice and how to plan ahead.",
+        content: `Under Canadian Red Cross and Ontario WSIB guidelines, Standard (Intermediate) First Aid and CPR/AED certifications remain valid for up to 3 years. However, waiting until your certificate has completely expired can cost you extra time and money.
+
+### Why Recertification Matters
+Emergency response skills naturally degrade over time if you don't use them regularly. Recertification refreshes your muscle memory, updates you on any new clinical protocols (such as recent ILCOR guideline updates), and keeps you legally compliant in your workplace.
+
+### The 1-Day Recertification Option vs Full Course
+If your current Canadian Red Cross Intermediate (Standard) First Aid certificate has NOT expired, you are eligible to take a fast-tracked, 1-day recertification course. This saves you an entire training day and offers a discounted course fee ($130 instead of the full course fee).
+
+### Important Rules for Recertification
+- You must hold a valid, unexpired Canadian Red Cross certification on the day of the course.
+- You cannot recertify a certificate that has already expired; once expired, WSIB regulations require completing the full course again.
+- A recertification certificate cannot be recertified consecutively; your next renewal must be a full course.
+
+### When Should You Book?
+We strongly advise booking your recertification training at least 30 to 60 days before your certification's expiry date to ensure you secure an open seat before your workplace credentials lapse.`
+      },
+      {
+        id: "b3",
+        title: "5 CPR Steps Everyone Should Know",
+        slug: "5-cpr-steps-everyone-should-know",
+        category: "Safety",
+        date: "November 10, 2026",
+        author: "Kanova Life Instructors",
+        readTime: "4 min read",
+        imageUrl: "https://static.wixstatic.com/media/2c3d7b_82a57891a9bf4c1f938f772967e22bbc~mv2.jpg",
+        excerpt: "Acting quickly in a cardiac emergency saves lives. A simple refresher on the essential steps you will master in class.",
+        content: `Cardiac arrest can happen anywhere—at home, at work, or in public. When a person's heart stops beating, brain damage can begin in as little as 4 minutes, and survival chances drop by 10% for every minute without CPR. Here are the 5 vital steps taught in Canadian Red Cross courses:
+
+### Step 1: Check the Scene & Responsiveness
+Before rushing in, ensure the scene is safe for you. Tap the victim's shoulders firmly and shout loudly: 'Are you okay?'. Look for normal chest rise and fall for no more than 5 to 10 seconds.
+
+### Step 2: Call 911 & Request an AED
+If the person is unresponsive and not breathing normally, point directly at a specific bystander and say: 'You, call 911 and bring an AED!'. If you are alone, call 911 on speakerphone immediately.
+
+### Step 3: Position Your Hands in the Center of the Chest
+Place the heel of one hand in the center of the person's chest (lower half of the breastbone). Interlock the fingers of your other hand on top. Keep your arms straight and position your shoulders directly over your hands.
+
+### Step 4: Push Hard and Fast (100–120 Compressions Per Minute)
+Compress the chest at least 5 cm (2 inches) deep at a rate of 100 to 120 beats per minute (to the beat of 'Stayin' Alive'). Allow complete chest recoil between each push. If trained in rescue breaths, deliver 30 compressions followed by 2 breaths; if untrained, perform continuous hands-only CPR.
+
+### Step 5: Turn On the AED Immediately
+As soon as the Automated External Defibrillator arrives, turn it on and follow its clear voice prompts. Apply the electrode pads to the person's bare chest as shown on the diagrams, ensure no one is touching the person, and press the shock button if advised by the machine.\n\nTaking an in-person first aid and CPR course gives you the hands-on muscle memory that makes these steps second nature in a real crisis.`
+      }
+    ];
+  }
+
   getCategories() {
     return [
       {

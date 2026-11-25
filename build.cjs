@@ -41,6 +41,7 @@ const siteFiles = [
   'admin.html',
   'locations.html',
   'blog.html',
+  'blog-detail.html',
   'styles.css',
   'wix-client.js',
 ];

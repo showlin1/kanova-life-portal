@@ -14,3 +14,6 @@ dist/
 # OS files
 Thumbs.db
 .DS_Store
+
+# Temp files
+scratch/
