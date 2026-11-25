@@ -457,14 +457,14 @@
             placeholder="Comprehensive training covering life-saving emergency first aid and CPR..."></textarea>
         </div>
         <div class="form-group">
-          <label class="form-label">Course Image (Direct Upload)</label>
-          <div style="border: 2px dashed #cbd5e1; border-radius: 8px; padding: 18px; text-align: center; background: #f8fafc; cursor: pointer; transition: border-color 0.2s;" onclick="document.getElementById('modal-course-file').click()">
+          <label class="form-label">Course Image (Upload from Computer) <span style="color: #ef4444; font-weight: 700;">* Required</span></label>
+          <div id="file-upload-box" style="border: 2px dashed #cbd5e1; border-radius: 8px; padding: 20px; text-align: center; background: #f8fafc; cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('modal-course-file').click()">
             <input type="file" id="modal-course-file" accept="image/*" style="display: none;" onchange="handleDirectFileSelect(this)">
             <input type="hidden" id="modal-course-image" value="">
             <div id="file-upload-prompt">
-              <div style="font-size: 2rem; margin-bottom: 4px;">📷</div>
-              <div style="font-weight: 700; font-size: 0.92rem; color: #1e293b;">Click to upload image from your computer</div>
-              <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">PNG, JPG, JPEG, WebP supported</div>
+              <div style="font-size: 2.2rem; margin-bottom: 6px;">📷</div>
+              <div style="font-weight: 700; font-size: 0.95rem; color: #1e293b;">Click to upload image from your computer</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">PNG, JPG, JPEG, WebP supported &bull; Required to create course</div>
             </div>
             <div id="file-upload-preview-wrap" style="display: none; align-items: center; justify-content: center; gap: 14px; margin-top: 4px;">
               <img id="modal-image-preview" src="" alt="Preview" style="width: 100px; height: 68px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border);">
@@ -475,6 +475,7 @@
               </div>
             </div>
           </div>
+          <small id="upload-error-msg" style="color: #ef4444; font-size: 0.82rem; display: none; margin-top: 6px; font-weight: 600;">Please upload an image from your computer. Image is required.</small>
         </div>
         <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
           <button type="button" class="btn btn-outline" style="color: #0b1329; border-color: var(--border);"
@@ -681,6 +682,11 @@
       const promptDiv = document.getElementById('file-upload-prompt');
       const previewWrap = document.getElementById('file-upload-preview-wrap');
       const nameDiv = document.getElementById('file-preview-name');
+      const errorMsg = document.getElementById('upload-error-msg');
+      const uploadBox = document.getElementById('file-upload-box');
+
+      if (errorMsg) errorMsg.style.display = 'none';
+      if (uploadBox) uploadBox.style.borderColor = '#22c55e';
 
       previewImg.src = URL.createObjectURL(file);
       nameDiv.textContent = file.name;
@@ -724,6 +730,10 @@
       document.getElementById('add-course-form').reset();
       document.getElementById('modal-course-image').value = '';
       document.getElementById('modal-course-file').value = '';
+      const errorMsg = document.getElementById('upload-error-msg');
+      if (errorMsg) errorMsg.style.display = 'none';
+      const uploadBox = document.getElementById('file-upload-box');
+      if (uploadBox) uploadBox.style.borderColor = '#cbd5e1';
       document.getElementById('file-upload-prompt').style.display = 'block';
       document.getElementById('file-upload-preview-wrap').style.display = 'none';
       document.getElementById('add-course-modal').classList.add('open');
@@ -746,6 +756,11 @@
       document.getElementById('modal-course-format').value = c.format || '';
       document.getElementById('modal-course-desc').value = c.description || '';
       
+      const errorMsg = document.getElementById('upload-error-msg');
+      if (errorMsg) errorMsg.style.display = 'none';
+      const uploadBox = document.getElementById('file-upload-box');
+      if (uploadBox) uploadBox.style.borderColor = '#cbd5e1';
+
       const currentImg = c.imageUrl || c.image || '';
       document.getElementById('modal-course-image').value = currentImg;
       document.getElementById('modal-course-file').value = '';
@@ -772,6 +787,21 @@
     async function handleCreateCourse(e) {
       e.preventDefault();
       const btn = document.getElementById('btn-save-course');
+
+      // Validation: Image upload is required
+      const existingImg = document.getElementById('modal-course-image').value;
+      if (!selectedImageFile && !existingImg) {
+        const errorMsg = document.getElementById('upload-error-msg');
+        if (errorMsg) errorMsg.style.display = 'block';
+        const uploadBox = document.getElementById('file-upload-box');
+        if (uploadBox) {
+          uploadBox.style.borderColor = '#ef4444';
+          uploadBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        alert('Please upload a course image. Image upload is required.');
+        return;
+      }
+
       btn.disabled = true;
       btn.textContent = editingCourseId ? 'Updating...' : 'Saving...';
 
@@ -783,7 +813,7 @@
       const format = document.getElementById('modal-course-format').value;
       const description = document.getElementById('modal-course-desc').value;
       
-      let finalImageUrl = document.getElementById('modal-course-image').value || 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&auto=format&fit=crop&q=60';
+      let finalImageUrl = existingImg;
       if (selectedImageFile) {
         btn.textContent = 'Processing image...';
         finalImageUrl = await readFileAsDataUrl(selectedImageFile);
