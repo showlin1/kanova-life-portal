@@ -27,6 +27,8 @@ const server = http.createServer((req, res) => {
 
   if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
     filePath = path.join(filePath, 'index.html');
+  } else if (!fs.existsSync(filePath) && fs.existsSync(filePath + '.html')) {
+    filePath = filePath + '.html';
   }
 
   fs.readFile(filePath, (err, content) => {

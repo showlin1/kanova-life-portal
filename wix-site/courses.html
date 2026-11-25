@@ -6,6 +6,26 @@
   <title>Courses &amp; Certification Programs | Kanova Life</title>
   <meta name="description" content="Browse certified Canadian Red Cross first aid, CPR/AED and BLS courses in Thunder Bay, Nipigon, and Terrace Bay organized by category.">
   <link rel="stylesheet" href="/styles.css">
+  <script>
+    if (window.location.pathname.endsWith('.html')) {
+      const clean = window.location.pathname.replace(/\.html$/, '') + window.location.search + window.location.hash;
+      window.history.replaceState(null, '', clean);
+    }
+    document.addEventListener('click', function (e) {
+      const a = e.target.closest('a');
+      if (!a || !a.href || a.target === '_blank' || a.hasAttribute('download')) return;
+      try {
+        const url = new URL(a.href, window.location.origin);
+        if (url.origin === window.location.origin) {
+          const p = url.pathname;
+          if (p !== '/' && !p.includes('.') && !p.endsWith('/')) {
+            e.preventDefault();
+            window.location.href = p + '.html' + url.search + url.hash;
+          }
+        }
+      } catch (err) {}
+    });
+  </script>
 </head>
 <body>
   <!-- Header -->
@@ -17,12 +37,12 @@
       </a>
       <ul class="nav-menu">
         <li><a href="/" class="nav-link">Home</a></li>
-        <li><a href="/courses.html" class="nav-link active">Course</a></li>
-        <li><a href="/locations.html" class="nav-link">Locations</a></li>
-        <li><a href="/blog.html" class="nav-link">Blog</a></li>
+        <li><a href="/courses" class="nav-link active">Course</a></li>
+        <li><a href="/locations" class="nav-link">Locations</a></li>
+        <li><a href="/blog" class="nav-link">Blog</a></li>
       </ul>
       <div class="nav-actions">
-        <a href="/courses.html" class="btn btn-primary">Book a Course &rarr;</a>
+        <a href="/courses" class="btn btn-primary">Book a Course &rarr;</a>
       </div>
     </div>
   </header>
@@ -82,7 +102,7 @@
                 <h3 class="course-name">Intermediate First Aid CPR/AED Level C (Blended)</h3>
                 <div class="course-footer">
                   <span class="course-price">$110.00</span>
-                  <a href="/course-detail.html?course=c-ifa-blended" class="course-link">Learn More &rarr;</a>
+                  <a href="/course-detail?course=c-ifa-blended" class="course-link">Learn More &rarr;</a>
                 </div>
               </div>
             </div>
@@ -96,7 +116,7 @@
                 <h3 class="course-name">Intermediate First Aid CPR/AED Level C Recertification</h3>
                 <div class="course-footer">
                   <span class="course-price">$130.00</span>
-                  <a href="/course-detail.html?course=c-ifa-recert" class="course-link">Learn More &rarr;</a>
+                  <a href="/course-detail?course=c-ifa-recert" class="course-link">Learn More &rarr;</a>
                 </div>
               </div>
             </div>
@@ -110,7 +130,7 @@
                 <h3 class="course-name">Intermediate First Aid CPR/AED Level C (2-Day In-Person)</h3>
                 <div class="course-footer">
                   <span class="course-price">$130.00</span>
-                  <a href="/course-detail.html?course=c-ifa-2day" class="course-link">Learn More &rarr;</a>
+                  <a href="/course-detail?course=c-ifa-2day" class="course-link">Learn More &rarr;</a>
                 </div>
               </div>
             </div>
@@ -140,7 +160,7 @@
                 <h3 class="course-name">Basic First Aid CPR/AED Level C (Blended)</h3>
                 <div class="course-footer">
                   <span class="course-price">$130.00</span>
-                  <a href="/course-detail.html?course=c-bfa-blended" class="course-link">Learn More &rarr;</a>
+                  <a href="/course-detail?course=c-bfa-blended" class="course-link">Learn More &rarr;</a>
                 </div>
               </div>
             </div>
@@ -154,7 +174,7 @@
                 <h3 class="course-name">Basic First Aid CPR/AED Level C (1-Day In-Person)</h3>
                 <div class="course-footer">
                   <span class="course-price">$130.00</span>
-                  <a href="/course-detail.html?course=c-bfa-1day" class="course-link">Learn More &rarr;</a>
+                  <a href="/course-detail?course=c-bfa-1day" class="course-link">Learn More &rarr;</a>
                 </div>
               </div>
             </div>
@@ -181,7 +201,7 @@
                 <h3 class="course-name">CPR/AED Level C (Blended)</h3>
                 <div class="course-footer">
                   <span class="course-price">$75.00</span>
-                  <a href="/course-detail.html?course=c-cpr-blended" class="course-link">Learn More &rarr;</a>
+                  <a href="/course-detail?course=c-cpr-blended" class="course-link">Learn More &rarr;</a>
                 </div>
               </div>
             </div>
@@ -195,7 +215,7 @@
                 <h3 class="course-name">CPR/AED Level C Recertification</h3>
                 <div class="course-footer">
                   <span class="course-price">$65.00</span>
-                  <a href="/course-detail.html?course=c-cpr-recert" class="course-link">Learn More &rarr;</a>
+                  <a href="/course-detail?course=c-cpr-recert" class="course-link">Learn More &rarr;</a>
                 </div>
               </div>
             </div>
@@ -226,7 +246,7 @@
                 <h3 class="course-name">Basic Life Support (CPR-HCP)</h3>
                 <div class="course-footer">
                   <span class="course-price" style="color: #64748b;">$85.00</span>
-                  <a href="/course-detail.html?course=c-bls-hcp" class="course-link">Learn More &rarr;</a>
+                  <a href="/course-detail?course=c-bls-hcp" class="course-link">Learn More &rarr;</a>
                 </div>
               </div>
             </div>
@@ -240,7 +260,7 @@
                 <h3 class="course-name">Basic Life Support (CPR-HCP) Recertification</h3>
                 <div class="course-footer">
                   <span class="course-price" style="color: #64748b;">$65.00</span>
-                  <a href="/course-detail.html?course=c-bls-recert" class="course-link">Learn More &rarr;</a>
+                  <a href="/course-detail?course=c-bls-recert" class="course-link">Learn More &rarr;</a>
                 </div>
               </div>
             </div>
@@ -267,7 +287,7 @@
                 <h3 class="course-name">Marine Basic First Aid CPR/AED Level C (2-Day)</h3>
                 <div class="course-footer">
                   <span class="course-price">$130.00</span>
-                  <a href="/course-detail.html?course=c-marine-2day" class="course-link">Learn More &rarr;</a>
+                  <a href="/course-detail?course=c-marine-2day" class="course-link">Learn More &rarr;</a>
                 </div>
               </div>
             </div>
@@ -298,7 +318,7 @@
                 <h3 class="course-name">N95 Mask Fit Testing (Qualitative)</h3>
                 <div class="course-footer">
                   <span class="course-price" style="color: #64748b;">$40.00</span>
-                  <a href="/course-detail.html?course=c-mask-n95" class="course-link">Learn More &rarr;</a>
+                  <a href="/course-detail?course=c-mask-n95" class="course-link">Learn More &rarr;</a>
                 </div>
               </div>
             </div>
@@ -312,7 +332,7 @@
                 <h3 class="course-name">Half-Face Respirator Fit Testing (Qualitative)</h3>
                 <div class="course-footer">
                   <span class="course-price" style="color: #64748b;">$50.00</span>
-                  <a href="/course-detail.html?course=c-mask-halfface" class="course-link">Learn More &rarr;</a>
+                  <a href="/course-detail?course=c-mask-halfface" class="course-link">Learn More &rarr;</a>
                 </div>
               </div>
             </div>
@@ -326,7 +346,7 @@
                 <h3 class="course-name">Full-Face Respirator Fit Testing (Qualitative)</h3>
                 <div class="course-footer">
                   <span class="course-price" style="color: #64748b;">$60.00</span>
-                  <a href="/course-detail.html?course=c-mask-fullface" class="course-link">Learn More &rarr;</a>
+                  <a href="/course-detail?course=c-mask-fullface" class="course-link">Learn More &rarr;</a>
                 </div>
               </div>
             </div>
@@ -353,7 +373,7 @@
                 <h3 class="course-name">Standard Child Care First Aid CPR/AED Level B (2-Day In-Person)</h3>
                 <div class="course-footer">
                   <span class="course-price">$130.00</span>
-                  <a href="/course-detail.html?course=c-childcare-2day" class="course-link">Learn More &rarr;</a>
+                  <a href="/course-detail?course=c-childcare-2day" class="course-link">Learn More &rarr;</a>
                 </div>
               </div>
             </div>
@@ -383,10 +403,10 @@
         <h4>Quick Links</h4>
         <ul class="footer-links">
           <li><a href="/">Home</a></li>
-          <li><a href="/courses.html">All Courses</a></li>
-          <li><a href="/locations.html">Training Locations</a></li>
-          <li><a href="/blog.html">First Aid Blog</a></li>
-          <li><a href="/admin.html">Admin Portal</a></li>
+          <li><a href="/courses">All Courses</a></li>
+          <li><a href="/locations">Training Locations</a></li>
+          <li><a href="/blog">First Aid Blog</a></li>
+          <li><a href="/admin">Admin Portal</a></li>
         </ul>
       </div>
       <div>
@@ -429,7 +449,7 @@
       const priceDisplay = course.isComingSoon ? `$${price.toFixed(2)} (Coming Soon)` : `$${price.toFixed(2)}`;
       const badge = course.badge || (course.isComingSoon ? 'Coming Soon' : 'Certified');
       const img = course.imageUrl || '/images/course-1.jpg';
-      const detailUrl = `/course-detail.html?course=${course.id || course.slug}`;
+      const detailUrl = `/course-detail?course=${course.id || course.slug}`;
 
       return `
         <div class="course-card">
