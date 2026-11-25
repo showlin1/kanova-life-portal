@@ -53,6 +53,18 @@ for (const file of siteFiles) {
     const dest = path.join(DIST_DIR, file);
     fs.copyFileSync(src, dest);
     allBuiltFiles.push(dest);
+
+    // Also support clean URLs by creating <name>/index.html
+    if (file.endsWith('.html') && file !== 'index.html') {
+      const dirName = file.replace(/\.html$/, '');
+      const subDir = path.join(DIST_DIR, dirName);
+      if (!fs.existsSync(subDir)) {
+        fs.mkdirSync(subDir, { recursive: true });
+      }
+      const subDest = path.join(subDir, 'index.html');
+      fs.copyFileSync(src, subDest);
+      allBuiltFiles.push(subDest);
+    }
   }
 }
 

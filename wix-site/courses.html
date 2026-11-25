@@ -423,12 +423,75 @@
       }
     }
 
+    function renderCourseCard(course) {
+      const title = course.title || course.name;
+      const price = Number(course.price) || 0;
+      const priceDisplay = course.isComingSoon ? `$${price.toFixed(2)} (Coming Soon)` : `$${price.toFixed(2)}`;
+      const badge = course.badge || (course.isComingSoon ? 'Coming Soon' : 'Certified');
+      const img = course.imageUrl || '/images/course-1.jpg';
+      const detailUrl = `/course-detail.html?course=${course.id || course.slug}`;
+
+      return `
+        <div class="course-card">
+          <div class="course-img-wrapper">
+            <img src="${img}" alt="${title}" class="course-img" loading="lazy" />
+          </div>
+          <div class="course-body">
+            <span class="badge-pill">${badge}</span>
+            <h3 class="course-name">${title}</h3>
+            <div class="course-footer">
+              <span class="course-price">${priceDisplay}</span>
+              <a href="${detailUrl}" class="course-link">Learn More &rarr;</a>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
     async function loadDynamicCourses() {
       if (!window.wixClient) return;
       try {
         const courses = await window.wixClient.getCourses();
         if (!courses || !courses.length) return;
-        // Keep UI synchronized with latest Wix CMS course prices/titles
+
+        const categories = window.wixClient.getCategories ? window.wixClient.getCategories() : [];
+        const container = document.getElementById('categorized-courses-container');
+        if (!container) return;
+
+        const groupsHtml = categories.map(cat => {
+          const catCourses = courses.filter(c => 
+            c.categoryId === cat.id || 
+            c.category === cat.name || 
+            (c.category && cat.shortName && c.category.toLowerCase().includes(cat.shortName.toLowerCase()))
+          );
+          if (!catCourses.length) return '';
+
+          const noteHtml = cat.note ? `
+            <div class="category-note">
+              <strong>Notice:</strong> ${cat.note}
+            </div>
+          ` : '';
+
+          return `
+            <div class="category-group" id="group-${cat.id}" data-category="${cat.id}">
+              <div class="category-header">
+                <div class="category-title-row">
+                  <h2 class="category-title">
+                    <span>${cat.isComingSoon ? '&#x23F3;' : '&#x1F4CB;'}</span> ${cat.name}
+                  </h2>
+                </div>
+                ${noteHtml}
+              </div>
+              <div class="course-grid">
+                ${catCourses.map(renderCourseCard).join('')}
+              </div>
+            </div>
+          `;
+        }).filter(Boolean).join('');
+
+        if (groupsHtml) {
+          container.innerHTML = groupsHtml;
+        }
       } catch (e) {
         console.warn('Wix CMS load', e);
       }

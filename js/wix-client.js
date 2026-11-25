@@ -73,10 +73,15 @@ class WixClient {
       if (res.ok) {
         const data = await res.json();
         if (data.dataItems && data.dataItems.length > 0) {
-          return data.dataItems.map(item => ({
-            id: item.id,
-            ...item.data
-          }));
+          return data.dataItems.map(item => {
+            const raw = item.data || {};
+            const resolvedImage = (raw.image && typeof raw.image === 'object') ? (raw.image.url || raw.image.src) : (raw.imageUrl || raw.image);
+            return {
+              id: item.id,
+              ...raw,
+              imageUrl: resolvedImage || raw.imageUrl
+            };
+          });
         }
       }
       return this.getDefaultCourses();
