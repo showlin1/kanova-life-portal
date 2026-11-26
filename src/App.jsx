@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import HomePage from './pages/HomePage';
-import CoursesPage from './pages/CoursesPage';
-import CourseDetailPage from './pages/CourseDetailPage';
-import BookingPage from './pages/BookingPage';
-import LocationsPage from './pages/LocationsPage';
-import BlogPage from './pages/BlogPage';
-import BlogDetailPage from './pages/BlogDetailPage';
-import AdminPage from './pages/AdminPage';
+const HomePage = React.lazy(() => import('./pages/HomePage'));
+const CoursesPage = React.lazy(() => import('./pages/CoursesPage'));
+const CourseDetailPage = React.lazy(() => import('./pages/CourseDetailPage'));
+const BookingPage = React.lazy(() => import('./pages/BookingPage'));
+const LocationsPage = React.lazy(() => import('./pages/LocationsPage'));
+const BlogPage = React.lazy(() => import('./pages/BlogPage'));
+const BlogDetailPage = React.lazy(() => import('./pages/BlogDetailPage'));
+const AdminPage = React.lazy(() => import('./pages/AdminPage'));
 import './styles.css';
 
 function parseRoute() {
@@ -76,23 +76,31 @@ export default function App() {
     };
   }, []);
 
-  switch (route) {
-    case 'courses':
-      return <CoursesPage />;
-    case 'course-detail':
-      return <CourseDetailPage />;
-    case 'book':
-      return <BookingPage />;
-    case 'locations':
-      return <LocationsPage />;
-    case 'blog':
-      return <BlogPage />;
-    case 'blog-detail':
-      return <BlogDetailPage />;
-    case 'admin':
-      return <AdminPage />;
-    case 'home':
-    default:
-      return <HomePage />;
-  }
+  const renderRoute = () => {
+    switch (route) {
+      case 'courses':
+        return <CoursesPage />;
+      case 'course-detail':
+        return <CourseDetailPage />;
+      case 'book':
+        return <BookingPage />;
+      case 'locations':
+        return <LocationsPage />;
+      case 'blog':
+        return <BlogPage />;
+      case 'blog-detail':
+        return <BlogDetailPage />;
+      case 'admin':
+        return <AdminPage />;
+      case 'home':
+      default:
+        return <HomePage />;
+    }
+  };
+
+  return (
+    <React.Suspense fallback={<div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'sans-serif', color: '#64748b' }}>Loading Kanova Life...</div>}>
+      {renderRoute()}
+    </React.Suspense>
+  );
 }

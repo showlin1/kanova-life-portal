@@ -6,12 +6,7 @@ export default defineConfig({
   base: './',
   build: {
     rollupOptions: {
-      external: ['react', 'react-dom', 'react-dom/client', 'react/jsx-runtime'],
-      output: {
-        manualChunks(id) {
-          if (id.includes('AdminPage')) return 'admin';
-        }
-      }
+      external: ['react', 'react-dom', 'react-dom/client', 'react/jsx-runtime']
     }
   }
 });
