@@ -6,15 +6,9 @@ export default defineConfig({
   base: './',
   build: {
     rollupOptions: {
-      external: [
-        'react',
-        'react-dom',
-        'react-dom/client',
-        'react/jsx-runtime'
-      ],
+      external: ['react', 'react-dom', 'react-dom/client', 'react/jsx-runtime'],
       output: {
         manualChunks(id) {
-          if (id.includes('components') || id.includes('wixClient')) return 'common';
           if (id.includes('AdminPage')) return 'admin';
           if (id.includes('HomePage')) return 'home';
           if (id.includes('CoursesPage')) return 'courses';
