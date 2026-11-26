@@ -211,13 +211,24 @@ export default function BookingPage() {
       sessionStorage.setItem('wix_last_checkout_booking', JSON.stringify(successSummary));
     } catch {}
 
-    setIsSubmitting(false);
-    setSubmitSuccess(successSummary);
-
     if (paymentUrl) {
       window.location.assign(paymentUrl);
+      return;
     }
+
+    setIsSubmitting(false);
+    setSubmitSuccess(successSummary);
   };
+
+  useEffect(() => {
+    const handlePageShow = (event) => {
+      if (event.persisted) {
+        setIsSubmitting(false);
+      }
+    };
+    window.addEventListener('pageshow', handlePageShow);
+    return () => window.removeEventListener('pageshow', handlePageShow);
+  }, []);
 
   const basePrice = selectedCourse ? Number(selectedCourse.price) || 0 : 0;
   const discountAmount = promoStatus && promoStatus.valid ? promoStatus.discount : 0;
@@ -225,6 +236,39 @@ export default function BookingPage() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {isSubmitting && (
+        <div
+          role="status"
+          aria-live="polite"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(255, 255, 255, 0.92)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 9999,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '16px'
+          }}
+        >
+          <style>{`@keyframes wixPaySpin { to { transform: rotate(360deg); } }`}</style>
+          <div
+            style={{
+              width: '44px',
+              height: '44px',
+              border: '4px solid #e2e8f0',
+              borderTopColor: 'var(--primary, #dc2626)',
+              borderRadius: '50%',
+              animation: 'wixPaySpin 0.8s linear infinite'
+            }}
+          />
+          <div style={{ fontSize: '1.08rem', fontWeight: 700, color: '#0f172a' }}>
+            Connecting with Wix Payment...
+          </div>
+        </div>
+      )}
       <Navbar activePage="courses" />
       <div style={{ flex: 1 }}>
         <main className="container booking-page-main">
@@ -528,7 +572,7 @@ export default function BookingPage() {
                       style={{ padding: '14px', fontSize: '1rem', fontWeight: 700 }}
                     >
                       {isSubmitting
-                        ? 'Connecting to Wix Checkout...'
+                        ? 'Connecting with Wix Payment...'
                         : `Pay $${totalPrice.toFixed(2)} CAD via Wix Checkout`}
                     </button>
                   </form>
