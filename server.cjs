@@ -3,7 +3,9 @@ const fs = require('fs');
 const path = require('path');
 
 const PORT = 3000;
-const SERVE_DIR = process.argv[2] ? path.resolve(__dirname, process.argv[2]) : __dirname;
+const SERVE_DIR = process.argv[2] 
+  ? path.resolve(__dirname, process.argv[2]) 
+  : (fs.existsSync(path.join(__dirname, 'dist')) ? path.join(__dirname, 'dist') : __dirname);
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',

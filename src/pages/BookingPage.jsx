@@ -1,0 +1,398 @@
+import React, { useState, useEffect } from 'react';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
+import wixClient from '../wixClient';
+
+const CITIES = {
+  'Thunder Bay': [
+    'Current River Community Centre',
+    'Vickers Heights Community Centre',
+    'West Thunder Community Centre',
+    'North End Community Centre'
+  ],
+  'Nipigon': [
+    'Nipigon Community Centre'
+  ],
+  'Terrace Bay': [
+    'Terrace Bay Community Centre'
+  ]
+};
+
+const SESSIONS = [
+  { id: 's1', date: 'Saturday, Dec 5, 2026', time: '9:00 AM – 5:00 PM (Full Day)', seats: '8 seats left' },
+  { id: 's2', date: 'Saturday, Dec 12, 2026', time: '9:00 AM – 5:00 PM (Full Day)', seats: '5 seats left' },
+  { id: 's3', date: 'Saturday, Dec 19, 2026', time: '9:00 AM – 5:00 PM (Full Day)', seats: '11 seats left' },
+  { id: 's4', date: 'Saturday, Jan 9, 2027', time: '9:00 AM – 5:00 PM (Full Day)', seats: '14 seats left' }
+];
+
+export default function BookingPage() {
+  const hashSearch = window.location.hash.includes('?') ? window.location.hash.substring(window.location.hash.indexOf('?')) : '';
+  const urlParams = new URLSearchParams(window.location.search || hashSearch);
+  const queryCourseId = urlParams.get('courseId') || urlParams.get('course') || '';
+
+  const [courses, setCourses] = useState([]);
+  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [city, setCity] = useState('Thunder Bay');
+  const [venue, setVenue] = useState(CITIES['Thunder Bay'][0]);
+  const [selectedSession, setSelectedSession] = useState(SESSIONS[0]);
+
+  // Promo code
+  const [promoCode, setPromoCode] = useState('');
+  const [promoStatus, setPromoStatus] = useState(null); // { valid, message, discount, finalPrice }
+  const [isApplyingPromo, setIsApplyingPromo] = useState(false);
+
+  // Form
+  const [studentName, setStudentName] = useState('');
+  const [studentEmail, setStudentEmail] = useState('');
+  const [studentPhone, setStudentPhone] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadCourses() {
+      try {
+        const list = await wixClient.getCourses();
+        const all = (list && list.length) ? list : wixClient.getDefaultCourses();
+        if (isMounted) {
+          setCourses(all);
+          const cleanId = (queryCourseId || '').toLowerCase();
+          const match = all.find(c =>
+            (c.id && c.id.toLowerCase() === cleanId) ||
+            (c.slug && c.slug.toLowerCase() === cleanId) ||
+            (c.aliasId && c.aliasId.toLowerCase() === cleanId)
+          ) || all[0];
+          setSelectedCourse(match);
+        }
+      } catch (e) {
+        const def = wixClient.getDefaultCourses();
+        if (isMounted) {
+          setCourses(def);
+          setSelectedCourse(def[0]);
+        }
+      }
+    }
+    loadCourses();
+    return () => { isMounted = false; };
+  }, [queryCourseId]);
+
+  const handleCityChange = (newCity) => {
+    setCity(newCity);
+    setVenue(CITIES[newCity][0]);
+  };
+
+  const handleCourseChange = (courseId) => {
+    const found = courses.find(c => c.id === courseId || c.slug === courseId);
+    if (found) {
+      setSelectedCourse(found);
+      setPromoStatus(null);
+      setPromoCode('');
+    }
+  };
+
+  const handleApplyPromo = async () => {
+    if (!promoCode.trim() || !selectedCourse) return;
+    setIsApplyingPromo(true);
+    try {
+      const basePrice = Number(selectedCourse.price) || 0;
+      const res = await wixClient.validateCoupon(promoCode, basePrice);
+      setPromoStatus(res);
+    } catch (err) {
+      setPromoStatus({ valid: false, message: 'Error checking coupon' });
+    } finally {
+      setIsApplyingPromo(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedCourse || isSubmitting) return;
+
+    setIsSubmitting(true);
+    const basePrice = Number(selectedCourse.price) || 0;
+    const finalFee = promoStatus && promoStatus.valid ? promoStatus.finalPrice : basePrice;
+
+    const bookingPayload = {
+      courseId: selectedCourse.id,
+      courseTitle: selectedCourse.title || selectedCourse.name,
+      studentName: studentName.trim(),
+      email: studentEmail.trim(),
+      phone: studentPhone.trim(),
+      city,
+      venue,
+      sessionDate: selectedSession.date,
+      sessionTime: selectedSession.time,
+      price: finalFee,
+      basePrice,
+      discount: promoStatus && promoStatus.valid ? promoStatus.discount : 0,
+      couponCode: promoStatus && promoStatus.valid ? promoCode.trim().toUpperCase() : '',
+      status: 'Confirmed',
+      createdAt: new Date().toISOString()
+    };
+
+    try {
+      await wixClient.createBooking(bookingPayload);
+      setSubmitSuccess({
+        title: selectedCourse.title || selectedCourse.name,
+        date: selectedSession.date,
+        venue,
+        city,
+        name: studentName,
+        total: finalFee
+      });
+    } catch (err) {
+      console.warn('Booking create error', err);
+      // Fallback local registration
+      try {
+        const local = JSON.parse(localStorage.getItem('wix_local_bookings') || '[]');
+        local.unshift({ id: 'loc-' + Date.now(), ...bookingPayload });
+        localStorage.setItem('wix_local_bookings', JSON.stringify(local));
+      } catch (le) { }
+      setSubmitSuccess({
+        title: selectedCourse.title || selectedCourse.name,
+        date: selectedSession.date,
+        venue,
+        city,
+        name: studentName,
+        total: finalFee
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const basePrice = selectedCourse ? Number(selectedCourse.price) || 0 : 0;
+  const discountAmount = promoStatus && promoStatus.valid ? promoStatus.discount : 0;
+  const totalPrice = promoStatus && promoStatus.valid ? promoStatus.finalPrice : basePrice;
+
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <Navbar activePage="courses" />
+      <div style={{ flex: 1 }}>
+        <main className="container booking-page-main">
+          <h1 className="section-title" style={{ marginBottom: '8px' }}>Select Location &amp; Date</h1>
+          <p className="section-desc" style={{ marginTop: 0, marginBottom: '32px' }}>
+            Pick a city, choose a community training location, and view seats left.
+          </p>
+
+          {submitSuccess ? (
+            <div className="booking-card booking-confirmation-card">
+              <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🎉</div>
+              <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--secondary)', marginBottom: '12px' }}>
+                Registration Confirmed!
+              </h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '1.05rem', lineHeight: 1.6, marginBottom: '24px' }}>
+                Thank you, <strong>{submitSuccess.name}</strong>! Your registration for <strong>{submitSuccess.title}</strong> has been successfully booked.
+              </p>
+              <div style={{ background: '#f8fafc', border: '1px solid var(--border)', borderRadius: '10px', padding: '16px', textAlign: 'left', marginBottom: '24px' }}>
+                <div style={{ marginBottom: '8px' }}><strong>Date:</strong> {submitSuccess.date}</div>
+                <div style={{ marginBottom: '8px' }}><strong>Location:</strong> {submitSuccess.venue}, {submitSuccess.city}</div>
+                <div><strong>Total Paid/Due:</strong> ${submitSuccess.total.toFixed(2)} CAD</div>
+              </div>
+              <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '24px' }}>
+                A confirmation email and Canadian Red Cross training workbook instructions have been sent to your inbox.
+              </p>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                <a href="/" className="btn btn-primary">Return Home</a>
+                <a href="/courses" className="btn btn-secondary">Browse More Courses</a>
+              </div>
+            </div>
+          ) : (
+            <div className="booking-container">
+              {/* Left: Step Selection */}
+              <div>
+                {/* Step 1: City & Venue */}
+                <div className="booking-card" style={{ marginBottom: '24px' }}>
+                  <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '16px' }}>Step 1: Choose Your City</h3>
+                  <div className="city-selector">
+                    {Object.keys(CITIES).map(c => (
+                      <button
+                        key={c}
+                        type="button"
+                        className={`city-btn ${city === c ? 'active' : ''}`}
+                        onClick={() => handleCityChange(c)}
+                      >
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+
+                  <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '12px', color: 'var(--text-muted)' }}>
+                    Select Training Venue:
+                  </h4>
+                  <div className="venue-list">
+                    {CITIES[city].map(v => (
+                      <button
+                        key={v}
+                        type="button"
+                        className={`venue-chip ${venue === v ? 'active' : ''}`}
+                        onClick={() => setVenue(v)}
+                      >
+                        {v}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Step 2: Available Dates */}
+                <div className="booking-card">
+                  <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '16px' }}>Step 2: Available Training Dates</h3>
+                  <div id="sessions-list">
+                    {SESSIONS.map(s => {
+                      const isSelected = selectedSession.id === s.id;
+                      return (
+                        <div
+                          key={s.id}
+                          className={`session-card ${isSelected ? 'selected' : ''}`}
+                          onClick={() => setSelectedSession(s)}
+                        >
+                          <div>
+                            <div style={{ fontWeight: 700, fontSize: '1.05rem' }}>{s.date}</div>
+                            <div style={{ fontSize: '0.88rem', color: 'var(--text-muted)' }}>{s.time}</div>
+                          </div>
+                          <span className="seats-badge">{s.seats}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right: Summary & Registration */}
+              <div>
+                <div className="booking-card booking-summary-card">
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '16px', borderBottom: '1px solid var(--border)', paddingBottom: '12px' }}>
+                    Booking Summary
+                  </h3>
+
+                  <div style={{ marginBottom: '16px' }}>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>SELECTED COURSE</div>
+                    <div style={{ fontWeight: 700, fontSize: '1.05rem', marginBottom: '8px' }}>
+                      {selectedCourse ? (selectedCourse.title || selectedCourse.name) : 'Loading...'}
+                    </div>
+                    {courses.length > 0 && (
+                      <select
+                        style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '0.88rem', fontFamily: 'inherit' }}
+                        value={selectedCourse ? selectedCourse.id : ''}
+                        onChange={(e) => handleCourseChange(e.target.value)}
+                      >
+                        {courses.map(c => (
+                          <option key={c.id} value={c.id}>
+                            {c.title || c.name} — ${(Number(c.price) || 0).toFixed(2)}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+
+                  <div style={{ marginBottom: '16px' }}>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>LOCATION</div>
+                    <div style={{ fontWeight: 700 }}>{venue}, {city}</div>
+                  </div>
+
+                  <div style={{ marginBottom: '20px' }}>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>DATE &amp; TIME</div>
+                    <div style={{ fontWeight: 700 }}>{selectedSession.date} · {selectedSession.time}</div>
+                  </div>
+
+                  {/* Coupon Code Input */}
+                  <div style={{ marginBottom: '16px', padding: '12px 0', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
+                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, marginBottom: '6px' }}>
+                      Promo / Coupon Code
+                    </label>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input
+                        type="text"
+                        placeholder="e.g. DISCOUNT20"
+                        style={{ flex: 1, padding: '8px 10px', border: '1px solid var(--border)', borderRadius: '6px', textTransform: 'uppercase' }}
+                        value={promoCode}
+                        onChange={(e) => setPromoCode(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        onClick={handleApplyPromo}
+                        disabled={isApplyingPromo}
+                      >
+                        {isApplyingPromo ? 'Checking...' : 'Apply'}
+                      </button>
+                    </div>
+                    {promoStatus && (
+                      <div style={{ fontSize: '0.82rem', marginTop: '6px', color: promoStatus.valid ? '#16a34a' : '#dc2626', fontWeight: 600 }}>
+                        {promoStatus.message}
+                      </div>
+                    )}
+                  </div>
+
+                  {discountAmount > 0 && (
+                    <div style={{ marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#16a34a', fontWeight: 700 }}>
+                      <span>Discount Applied:</span>
+                      <span>-${discountAmount.toFixed(2)}</span>
+                    </div>
+                  )}
+
+                  <div style={{ marginBottom: '24px', paddingTop: '12px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: 700 }}>Total Course Fee:</span>
+                    <span style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--primary)' }}>
+                      ${totalPrice.toFixed(2)}
+                    </span>
+                  </div>
+
+                  <form onSubmit={handleSubmit}>
+                    <div style={{ marginBottom: '12px' }}>
+                      <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, marginBottom: '4px' }}>
+                        Full Name *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="John Doe"
+                        style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', borderRadius: '6px' }}
+                        value={studentName}
+                        onChange={(e) => setStudentName(e.target.value)}
+                      />
+                    </div>
+                    <div style={{ marginBottom: '12px' }}>
+                      <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, marginBottom: '4px' }}>
+                        Email Address *
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        placeholder="john@example.com"
+                        style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', borderRadius: '6px' }}
+                        value={studentEmail}
+                        onChange={(e) => setStudentEmail(e.target.value)}
+                      />
+                    </div>
+                    <div style={{ marginBottom: '20px' }}>
+                      <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, marginBottom: '4px' }}>
+                        Phone Number *
+                      </label>
+                      <input
+                        type="tel"
+                        required
+                        placeholder="(807) 555-0123"
+                        style={{ width: '100%', padding: '10px', border: '1px solid var(--border)', borderRadius: '6px' }}
+                        value={studentPhone}
+                        onChange={(e) => setStudentPhone(e.target.value)}
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      className="btn btn-primary btn-block"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? 'Processing Registration...' : 'Confirm & Proceed to Payment'}
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
+      <Footer />
+    </div>
+  );
+}

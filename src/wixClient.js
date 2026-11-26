@@ -158,6 +158,17 @@ class WixClient {
     return res.status === 200;
   }
 
+  async updateCoupon(id, couponData) {
+    const res = await this.fetchApi(`/wix-data/v2/items/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        dataCollectionId: 'Coupons',
+        dataItem: { id, data: couponData }
+      })
+    });
+    return res.json();
+  }
+
   async validateCoupon(code, coursePrice) {
     if (!code) return { valid: false, message: 'Please enter a coupon code' };
     const coupons = await this.getCoupons();
@@ -666,4 +677,9 @@ As soon as the Automated External Defibrillator arrives, turn it on and follow i
   }
 }
 
-window.wixClient = new WixClient();
+const wixClient = new WixClient();
+if (typeof window !== 'undefined') {
+  window.wixClient = wixClient;
+}
+export { wixClient };
+export default wixClient;
