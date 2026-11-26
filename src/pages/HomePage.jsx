@@ -242,11 +242,12 @@ export default function HomePage() {
             <div id="home-courses-container">
               {filteredCategories.map(cat => {
                 const catCourses = displayedList.filter(c => {
-                  if (c.categoryId && c.categoryId.toLowerCase().trim() === cat.id.toLowerCase().trim()) return true;
-                  if (c.category && cat.name && c.category.toLowerCase().trim() === cat.name.toLowerCase().trim()) return true;
-                  if (c.category && cat.shortName && c.category.toLowerCase().includes(cat.shortName.toLowerCase())) return true;
-                  if (c.category && `cat-${c.category.toLowerCase().replace(/[^a-z0-9]+/g, '-')}` === cat.id) return true;
-                  return false;
+                  let courseCatId = (c.categoryId || '').trim().toLowerCase();
+                  if (!courseCatId && c.category) {
+                    let clean = c.category.replace(/\s*\(\s*coming\s*soon\s*\)/i, '').trim();
+                    courseCatId = 'cat-' + clean.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                  }
+                  return courseCatId === cat.id.toLowerCase();
                 });
                 if (!catCourses.length) return null;
 

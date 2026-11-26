@@ -473,24 +473,25 @@ As soon as the Automated External Defibrillator arrives, turn it on and follow i
     }
 
     const result = [...baseCategories];
-    const existingNames = new Set(baseCategories.map(c => c.name.toLowerCase().trim()));
     const existingIds = new Set(baseCategories.map(c => c.id.toLowerCase().trim()));
 
     courses.forEach(c => {
-      const catName = (c.category || '').trim();
-      const catId = (c.categoryId || '').trim();
-      if (catName && !existingNames.has(catName.toLowerCase())) {
-        const slug = catName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-        const newCat = {
-          id: catId || `cat-${slug}`,
-          name: catName,
-          shortName: catName,
+      let rawCat = (c.category || '').trim();
+      let cleanCat = rawCat.replace(/\s*\(\s*coming\s*soon\s*\)/i, '').trim();
+      let catId = (c.categoryId || '').trim().toLowerCase();
+      if (!catId && cleanCat) {
+        catId = 'cat-' + cleanCat.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      }
+
+      if (catId && !existingIds.has(catId)) {
+        result.push({
+          id: catId,
+          name: cleanCat || rawCat,
+          shortName: cleanCat || rawCat,
           note: c.categoryNote || '',
-          isComingSoon: !!c.isComingSoon
-        };
-        result.push(newCat);
-        existingNames.add(catName.toLowerCase());
-        existingIds.add(newCat.id.toLowerCase());
+          isComingSoon: !!c.isComingSoon || rawCat.toLowerCase().includes('coming soon')
+        });
+        existingIds.add(catId);
       }
     });
 
