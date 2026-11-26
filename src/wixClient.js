@@ -238,38 +238,138 @@ class WixClient {
     return res.json();
   }
 
-  // --- WIX PAYMENTS ---
-  async createPaymentLink(paymentDetails) {
-    const { title, price, currency = 'CAD', studentName, studentEmail } = paymentDetails;
-    const body = {
-      paymentLink: {
-        title: title || 'Course Registration',
-        currency: currency,
-        type: 'ECOM',
-        ecomPaymentLink: {
-          lineItems: [
-            {
-              type: 'CUSTOM',
-              customItem: {
-                name: title || 'Course Registration',
-                quantity: 1,
-                price: (Number(price) || 0).toFixed(2)
+  // --- WIX PAYMENTS & CHECKOUT ---
+  async createWixCheckout(checkoutDetails) {
+    const {
+      courseId,
+      title,
+      sessionDate,
+      city,
+      venue,
+      studentName,
+      studentEmail,
+      studentPhone,
+      couponCode
+    } = checkoutDetails;
+
+    if (!courseId) {
+      throw new Error('Selected course is missing a catalog ID.');
+    }
+
+    const noteParts = [
+      title ? `Course: ${title}` : '',
+      sessionDate ? `Session: ${sessionDate}` : '',
+      venue || city ? `Location: ${[venue, city].filter(Boolean).join(', ')}` : '',
+      studentName ? `Student: ${studentName}` : ''
+    ].filter(Boolean);
+    const noteText = noteParts.join(' | ');
+
+    // 1. Create a fresh visitor-owned Cart V2 referencing the CMS Courses catalog item
+    const cartRes = await this.fetchApi('/ecom/v2/carts', {
+      method: 'POST',
+      body: JSON.stringify({
+        catalogItems: [
+          {
+            catalogReference: {
+              appId: 'e593b0bd-b783-45b8-97c2-873d42aacaf4',
+              catalogItemId: courseId,
+              options: {
+                collectionId: 'Courses'
               }
+            },
+            quantity: 1
+          }
+        ],
+        ...(noteText ? { note: noteText } : {})
+      })
+    });
+
+    const cartData = await cartRes.json().catch(() => ({}));
+    if (!cartRes.ok || !cartData?.cart?.id) {
+      const errMsg = cartData?.message || cartData?.details?.applicationError?.description || `Failed to create Wix checkout cart (${cartRes.status})`;
+      throw new Error(errMsg);
+    }
+
+    const cartId = cartData.cart.id;
+
+    // 2. Attach student contact info to prefill Wix Checkout (best-effort, non-blocking)
+    try {
+      const cleanName = (studentName || '').trim();
+      const [firstName, ...restName] = cleanName ? cleanName.split(/\s+/) : [];
+      const lastName = restName.join(' ');
+      const customerInfo = {
+        ...(firstName ? { firstName } : {}),
+        ...(lastName ? { lastName } : {}),
+        ...(studentEmail ? { email: studentEmail.trim() } : {}),
+        ...(studentPhone ? { phone: studentPhone.trim() } : {})
+      };
+      if (Object.keys(customerInfo).length > 0 || noteText) {
+        await this.fetchApi(`/ecom/v2/carts/${cartId}`, {
+          method: 'PATCH',
+          body: JSON.stringify({
+            cart: {
+              ...(Object.keys(customerInfo).length > 0 ? { customerInfo } : {}),
+              ...(noteText ? { note: noteText } : {})
             }
-          ]
+          })
+        });
+      }
+    } catch (patchErr) {
+      console.warn('Wix Cart customerInfo update warning:', patchErr);
+    }
+
+    // 3. Apply coupon code on Wix Cart if it also exists in Wix Marketing Coupons (best-effort)
+    if (couponCode && couponCode.trim()) {
+      try {
+        await this.fetchApi(`/ecom/v2/carts/${cartId}/add-coupon`, {
+          method: 'POST',
+          body: JSON.stringify({
+            coupon: { code: couponCode.trim().toUpperCase() }
+          })
+        });
+      } catch (couponErr) {
+        console.warn('Wix Cart coupon sync note:', couponErr);
+      }
+    }
+
+    // 4. Generate official Wix Headless hosted checkout Redirect Session URL
+    const origin = (typeof window !== 'undefined' && window.location && window.location.origin)
+      ? window.location.origin
+      : 'https://headless-zoxjvmdldqa-cmsscaleup-140a.wix-site-host.com';
+
+    const redirectRes = await this.fetchApi('/_api/redirects-api/v1/redirect-session', {
+      method: 'POST',
+      body: JSON.stringify({
+        ecomCheckout: { checkoutId: cartId },
+        callbacks: {
+          postFlowUrl: `${origin}/#/book`,
+          thankYouPageUrl: `${origin}/?paymentStatus=success#/book`
         }
+      })
+    });
+
+    const redirectData = await redirectRes.json().catch(() => ({}));
+    const checkoutUrl = redirectData?.redirectSession?.fullUrl;
+    if (!redirectRes.ok || !checkoutUrl) {
+      const errMsg = redirectData?.message || `Failed to create Wix checkout redirect session (${redirectRes.status})`;
+      throw new Error(errMsg);
+    }
+
+    return {
+      checkoutId: cartId,
+      checkoutUrl
+    };
+  }
+
+  async createPaymentLink(paymentDetails) {
+    const res = await this.createWixCheckout(paymentDetails);
+    return {
+      paymentLink: {
+        id: res.checkoutId,
+        url: res.checkoutUrl,
+        links: { url: { url: res.checkoutUrl } }
       }
     };
-    try {
-      const res = await this.fetchApi('/payment-links/v1/payment-links', {
-        method: 'POST',
-        body: JSON.stringify(body)
-      });
-      return await res.json();
-    } catch (err) {
-      console.warn('Wix createPaymentLink error:', err);
-      return null;
-    }
   }
 
   async getBookings() {

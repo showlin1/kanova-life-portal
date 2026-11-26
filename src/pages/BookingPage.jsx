@@ -27,8 +27,10 @@ const SESSIONS = [
 
 export default function BookingPage() {
   const hashSearch = window.location.hash.includes('?') ? window.location.hash.substring(window.location.hash.indexOf('?')) : '';
-  const urlParams = new URLSearchParams(window.location.search || hashSearch);
-  const queryCourseId = urlParams.get('courseId') || urlParams.get('course') || '';
+  const searchParams = new URLSearchParams(window.location.search);
+  const hashParams = new URLSearchParams(hashSearch);
+  const queryCourseId = searchParams.get('courseId') || searchParams.get('course') || hashParams.get('courseId') || hashParams.get('course') || '';
+  const paymentReturnStatus = searchParams.get('paymentStatus') || hashParams.get('paymentStatus');
 
   const [courses, setCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState(null);
@@ -45,9 +47,27 @@ export default function BookingPage() {
   const [studentName, setStudentName] = useState('');
   const [studentEmail, setStudentEmail] = useState('');
   const [studentPhone, setStudentPhone] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('wix'); // 'wix' (Online) or 'onsite'
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitSuccess, setSubmitSuccess] = useState(null);
+  const [submitError, setSubmitError] = useState(null);
+  const [submitSuccess, setSubmitSuccess] = useState(() => {
+    if (paymentReturnStatus === 'success') {
+      try {
+        const saved = JSON.parse(sessionStorage.getItem('wix_last_checkout_booking') || 'null');
+        if (saved) return { ...saved, paid: true };
+      } catch {}
+      return {
+        title: 'First Aid & CPR Training Course',
+        date: SESSIONS[0].date,
+        venue: CITIES['Thunder Bay'][0],
+        city: 'Thunder Bay',
+        name: 'Student',
+        total: 0,
+        paymentMethod: 'wix',
+        paid: true
+      };
+    }
+    return null;
+  });
 
   useEffect(() => {
     let isMounted = true;
@@ -110,35 +130,40 @@ export default function BookingPage() {
     if (!selectedCourse || isSubmitting) return;
 
     setIsSubmitting(true);
+    setSubmitError(null);
     const basePrice = Number(selectedCourse.price) || 0;
     const finalFee = promoStatus && promoStatus.valid ? promoStatus.finalPrice : basePrice;
+    const appliedCouponCode = promoStatus && promoStatus.valid ? promoCode.trim().toUpperCase() : '';
+    const courseTitle = selectedCourse.title || selectedCourse.name;
 
-    let paymentUrl = null;
-    let paymentLinkId = null;
-    let paymentStatus = paymentMethod === 'wix' ? 'Pending Online Payment' : 'Pay on Arrival';
-
-    // If online payment selected via Wix, generate official Wix Payment Link
-    if (paymentMethod === 'wix' && finalFee > 0) {
-      try {
-        const payRes = await wixClient.createPaymentLink({
-          title: `${selectedCourse.title || selectedCourse.name} - ${selectedSession.date}`,
-          price: finalFee,
-          currency: 'CAD',
-          studentName: studentName.trim(),
-          studentEmail: studentEmail.trim()
-        });
-        if (payRes && payRes.paymentLink) {
-          paymentLinkId = payRes.paymentLink.id;
-          paymentUrl = payRes.paymentLink.links?.url?.url || payRes.paymentLink.url;
-        }
-      } catch (payErr) {
-        console.warn('Wix Payment Link creation note:', payErr);
-      }
+    let checkoutRes;
+    try {
+      checkoutRes = await wixClient.createWixCheckout({
+        courseId: selectedCourse._id || selectedCourse.id,
+        title: `${courseTitle} - ${selectedSession.date}`,
+        sessionDate: selectedSession.date,
+        city,
+        venue,
+        studentName: studentName.trim(),
+        studentEmail: studentEmail.trim(),
+        studentPhone: studentPhone.trim(),
+        couponCode: appliedCouponCode
+      });
+    } catch (payErr) {
+      console.error('Wix Checkout creation error:', payErr);
+      setSubmitError(payErr?.message || 'Unable to connect to Wix Checkout. Please try again.');
+      setIsSubmitting(false);
+      return;
     }
 
+    const paymentMethod = 'wix';
+    const paymentLinkId = checkoutRes.checkoutId;
+    const paymentUrl = checkoutRes.checkoutUrl;
+    const paymentStatus = 'Pending Online Payment';
+
     const bookingPayload = {
-      courseId: selectedCourse.id,
-      courseTitle: selectedCourse.title || selectedCourse.name,
+      courseId: selectedCourse._id || selectedCourse.id,
+      courseTitle,
       studentName: studentName.trim(),
       email: studentEmail.trim(),
       phone: studentPhone.trim(),
@@ -149,12 +174,12 @@ export default function BookingPage() {
       price: finalFee,
       basePrice,
       discount: promoStatus && promoStatus.valid ? promoStatus.discount : 0,
-      couponCode: promoStatus && promoStatus.valid ? promoCode.trim().toUpperCase() : '',
+      couponCode: appliedCouponCode,
       paymentMethod,
       paymentStatus,
       paymentLinkId,
       paymentUrl,
-      status: paymentMethod === 'wix' ? (paymentUrl ? 'Pending Payment' : 'Confirmed') : 'Confirmed',
+      status: 'Pending Payment',
       createdAt: new Date().toISOString()
     };
 
@@ -168,18 +193,29 @@ export default function BookingPage() {
         local.unshift({ id: 'loc-' + Date.now(), ...bookingPayload });
         localStorage.setItem('wix_local_bookings', JSON.stringify(local));
       } catch (le) { }
-    } finally {
-      setIsSubmitting(false);
-      setSubmitSuccess({
-        title: selectedCourse.title || selectedCourse.name,
-        date: selectedSession.date,
-        venue,
-        city,
-        name: studentName,
-        total: finalFee,
-        paymentMethod,
-        paymentUrl
-      });
+    }
+
+    const successSummary = {
+      title: courseTitle,
+      date: selectedSession.date,
+      venue,
+      city,
+      name: studentName.trim(),
+      total: finalFee,
+      paymentMethod: 'wix',
+      paymentUrl,
+      paid: false
+    };
+
+    try {
+      sessionStorage.setItem('wix_last_checkout_booking', JSON.stringify(successSummary));
+    } catch {}
+
+    setIsSubmitting(false);
+    setSubmitSuccess(successSummary);
+
+    if (paymentUrl) {
+      window.location.assign(paymentUrl);
     }
   };
 
@@ -201,28 +237,31 @@ export default function BookingPage() {
             <div className="booking-card booking-confirmation-card">
               <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🎉</div>
               <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--secondary)', marginBottom: '12px' }}>
-                {submitSuccess.paymentUrl ? 'Booking Reserved – Payment Ready!' : 'Registration Confirmed!'}
+                {submitSuccess.paid ? 'Payment Completed – Registration Confirmed!' : 'Booking Reserved – Redirecting to Wix Checkout'}
               </h2>
               <p style={{ color: 'var(--text-muted)', fontSize: '1.05rem', lineHeight: 1.6, marginBottom: '24px' }}>
-                Thank you, <strong>{submitSuccess.name}</strong>! Your registration for <strong>{submitSuccess.title}</strong> has been successfully saved in Wix CMS.
+                Thank you, <strong>{submitSuccess.name}</strong>! Your registration for <strong>{submitSuccess.title}</strong> has been saved in Wix CMS.
               </p>
               <div style={{ background: '#f8fafc', border: '1px solid var(--border)', borderRadius: '10px', padding: '16px', textAlign: 'left', marginBottom: '24px' }}>
                 <div style={{ marginBottom: '8px' }}><strong>Date:</strong> {submitSuccess.date}</div>
                 <div style={{ marginBottom: '8px' }}><strong>Location:</strong> {submitSuccess.venue}, {submitSuccess.city}</div>
-                <div style={{ marginBottom: '8px' }}><strong>Total Fee:</strong> ${submitSuccess.total.toFixed(2)} CAD</div>
-                <div><strong>Payment Method:</strong> {submitSuccess.paymentMethod === 'wix' ? 'Online via Wix Checkout' : 'Pay on Arrival (Classroom)'}</div>
+                {submitSuccess.total > 0 && (
+                  <div style={{ marginBottom: '8px' }}><strong>Total Fee:</strong> ${submitSuccess.total.toFixed(2)} CAD</div>
+                )}
+                <div><strong>Payment Method:</strong> Online via Wix Checkout</div>
               </div>
 
-              {submitSuccess.paymentUrl ? (
+              {submitSuccess.paymentUrl && !submitSuccess.paid ? (
                 <div style={{ background: '#f0fdf4', border: '2px solid #86efac', borderRadius: '12px', padding: '24px', marginBottom: '24px', textAlign: 'center' }}>
                   <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#166534', marginBottom: '8px' }}>
                     🔒 Official Wix Secure Checkout
                   </div>
                   <p style={{ fontSize: '0.92rem', color: '#15803d', marginBottom: '18px', lineHeight: 1.5 }}>
-                    Your official Wix checkout link is ready. Click below to pay <strong>${submitSuccess.total.toFixed(2)} CAD</strong> securely using Credit/Debit Card, Apple Pay, Google Pay, or PayPal.
+                    If you are not redirected automatically, click below to pay <strong>${submitSuccess.total.toFixed(2)} CAD</strong> securely on Wix Checkout.
                   </p>
                   <a
                     href={submitSuccess.paymentUrl}
+                    onClick={(e) => { e.stopPropagation(); }}
                     className="btn btn-primary btn-lg"
                     style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', padding: '14px 28px', fontSize: '1.05rem', boxShadow: '0 8px 16px -4px rgba(220, 38, 38, 0.4)' }}
                   >
@@ -433,8 +472,8 @@ export default function BookingPage() {
                             gap: '12px',
                             padding: '12px 14px',
                             borderRadius: '10px',
-                            border: `2px solid ${paymentMethod === 'wix' ? 'var(--primary)' : 'var(--border)'}`,
-                            background: paymentMethod === 'wix' ? '#fef2f2' : '#fff',
+                            border: '2px solid var(--primary)',
+                            background: '#fef2f2',
                             cursor: 'pointer',
                             transition: 'all 0.2s'
                           }}
@@ -443,8 +482,8 @@ export default function BookingPage() {
                             type="radio"
                             name="paymentOption"
                             value="wix"
-                            checked={paymentMethod === 'wix'}
-                            onChange={() => setPaymentMethod('wix')}
+                            checked
+                            readOnly
                             style={{ marginTop: '3px' }}
                           />
                           <div style={{ flex: 1 }}>
@@ -461,39 +500,26 @@ export default function BookingPage() {
                             </div>
                           </div>
                         </label>
-
-                        <label
-                          style={{
-                            display: 'flex',
-                            alignItems: 'flex-start',
-                            gap: '12px',
-                            padding: '12px 14px',
-                            borderRadius: '10px',
-                            border: `2px solid ${paymentMethod === 'onsite' ? 'var(--primary)' : 'var(--border)'}`,
-                            background: paymentMethod === 'onsite' ? '#fef2f2' : '#fff',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s'
-                          }}
-                        >
-                          <input
-                            type="radio"
-                            name="paymentOption"
-                            value="onsite"
-                            checked={paymentMethod === 'onsite'}
-                            onChange={() => setPaymentMethod('onsite')}
-                            style={{ marginTop: '3px' }}
-                          />
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontWeight: 700, fontSize: '0.92rem', color: 'var(--secondary)' }}>
-                              Pay on Arrival (Classroom)
-                            </div>
-                            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '3px' }}>
-                              Reserve seat now and pay in person on course day (Debit, Cash, Workplace Invoice)
-                            </div>
-                          </div>
-                        </label>
                       </div>
                     </div>
+
+                    {submitError && (
+                      <div
+                        role="alert"
+                        style={{
+                          background: '#fef2f2',
+                          border: '1px solid #fca5a5',
+                          color: '#b91c1c',
+                          borderRadius: '8px',
+                          padding: '10px 12px',
+                          fontSize: '0.85rem',
+                          fontWeight: 600,
+                          marginBottom: '14px'
+                        }}
+                      >
+                        {submitError}
+                      </div>
+                    )}
 
                     <button
                       type="submit"
@@ -502,8 +528,8 @@ export default function BookingPage() {
                       style={{ padding: '14px', fontSize: '1rem', fontWeight: 700 }}
                     >
                       {isSubmitting
-                        ? (paymentMethod === 'wix' ? 'Connecting to Wix Checkout...' : 'Confirming Reservation...')
-                        : (paymentMethod === 'wix' ? `Pay $${totalPrice.toFixed(2)} CAD via Wix Checkout` : 'Confirm Seat (Pay on Arrival)')}
+                        ? 'Connecting to Wix Checkout...'
+                        : `Pay $${totalPrice.toFixed(2)} CAD via Wix Checkout`}
                     </button>
                   </form>
                 </div>
