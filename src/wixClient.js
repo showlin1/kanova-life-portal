@@ -216,6 +216,40 @@ class WixClient {
     return res.json();
   }
 
+  // --- WIX PAYMENTS ---
+  async createPaymentLink(paymentDetails) {
+    const { title, price, currency = 'CAD', studentName, studentEmail } = paymentDetails;
+    const body = {
+      paymentLink: {
+        title: title || 'Course Registration',
+        currency: currency,
+        type: 'ECOM',
+        ecomPaymentLink: {
+          lineItems: [
+            {
+              type: 'CUSTOM',
+              customItem: {
+                name: title || 'Course Registration',
+                quantity: 1,
+                price: (Number(price) || 0).toFixed(2)
+              }
+            }
+          ]
+        }
+      }
+    };
+    try {
+      const res = await this.fetchApi('/payment-links/v1/payment-links', {
+        method: 'POST',
+        body: JSON.stringify(body)
+      });
+      return await res.json();
+    } catch (err) {
+      console.warn('Wix createPaymentLink error:', err);
+      return null;
+    }
+  }
+
   async getBookings() {
     try {
       const res = await this.fetchApi('/wix-data/v2/items/query', {
