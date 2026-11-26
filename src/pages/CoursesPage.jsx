@@ -8,8 +8,6 @@ export default function CoursesPage() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const categories = wixClient.getCategories();
-
   useEffect(() => {
     let isMounted = true;
     async function loadData() {
@@ -33,6 +31,7 @@ export default function CoursesPage() {
   }, []);
 
   const displayedList = courses.length ? courses : wixClient.getDefaultCourses();
+  const categories = wixClient.getCategories(displayedList);
   const filteredCategories = activeCategory === 'all'
     ? categories
     : categories.filter(c => c.id === activeCategory);
@@ -84,11 +83,13 @@ export default function CoursesPage() {
 
             <div id="categorized-courses-container">
               {filteredCategories.map(cat => {
-                const catCourses = displayedList.filter(c =>
-                  c.categoryId === cat.id ||
-                  c.category === cat.name ||
-                  (c.category && cat.shortName && c.category.toLowerCase().includes(cat.shortName.toLowerCase()))
-                );
+                const catCourses = displayedList.filter(c => {
+                  if (c.categoryId && c.categoryId.toLowerCase().trim() === cat.id.toLowerCase().trim()) return true;
+                  if (c.category && cat.name && c.category.toLowerCase().trim() === cat.name.toLowerCase().trim()) return true;
+                  if (c.category && cat.shortName && c.category.toLowerCase().includes(cat.shortName.toLowerCase())) return true;
+                  if (c.category && `cat-${c.category.toLowerCase().replace(/[^a-z0-9]+/g, '-')}` === cat.id) return true;
+                  return false;
+                });
                 if (!catCourses.length) return null;
 
                 return (
@@ -111,7 +112,7 @@ export default function CoursesPage() {
                         const title = course.title || course.name;
                         const price = Number(course.price) || 0;
                         const badge = course.badge || (course.isComingSoon ? 'Coming Soon' : 'Certified');
-                        const img = course.imageUrl || '/images/course-1.jpg';
+                        const img = wixClient.resolveImageUrl(course.image || course.imageUrl, '/images/course-1.jpg');
                         const linkId = course.id || course.slug;
 
                         return (

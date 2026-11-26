@@ -58,6 +58,21 @@ class WixClient {
     });
   }
 
+  resolveImageUrl(img, fallback = '/images/course-1.jpg') {
+    if (!img) return fallback;
+    if (typeof img === 'string') {
+      if (img.startsWith('http://') || img.startsWith('https://')) return img;
+      if (img.startsWith('wix:image://v1/')) {
+        const parts = img.replace('wix:image://v1/', '').split('/');
+        const fileId = parts[0];
+        return `https://static.wixstatic.com/media/${fileId}`;
+      }
+      if (img.startsWith('/')) return img;
+    }
+    if (typeof img === 'object' && img.url) return img.url;
+    return fallback;
+  }
+
   // --- COURSES ---
   async getCourses() {
     try {
@@ -66,17 +81,24 @@ class WixClient {
         body: JSON.stringify({
           dataCollectionId: 'Courses',
           query: {
-            paging: { limit: 50 }
+            paging: { limit: 100 }
           }
         })
       });
       if (res.ok) {
         const data = await res.json();
         if (data.dataItems && data.dataItems.length > 0) {
-          return data.dataItems.map(item => ({
-            id: item.id,
-            ...item.data
-          }));
+          return data.dataItems.map(item => {
+            const d = item.data || {};
+            const rawImg = d.image || d.imageUrl;
+            return {
+              id: item.id,
+              _id: item.id,
+              ...d,
+              image: d.image,
+              imageUrl: this.resolveImageUrl(rawImg, '/images/course-1.jpg')
+            };
+          });
         }
       }
       return this.getDefaultCourses();
@@ -399,8 +421,8 @@ As soon as the Automated External Defibrillator arrives, turn it on and follow i
     ];
   }
 
-  getCategories() {
-    return [
+  getCategories(courses = []) {
+    const baseCategories = [
       {
         id: "cat-intermediate",
         name: "Intermediate First Aid Courses",
@@ -445,6 +467,34 @@ As soon as the Automated External Defibrillator arrives, turn it on and follow i
         shortName: "Child Care First Aid"
       }
     ];
+
+    if (!courses || !courses.length) {
+      return baseCategories;
+    }
+
+    const result = [...baseCategories];
+    const existingNames = new Set(baseCategories.map(c => c.name.toLowerCase().trim()));
+    const existingIds = new Set(baseCategories.map(c => c.id.toLowerCase().trim()));
+
+    courses.forEach(c => {
+      const catName = (c.category || '').trim();
+      const catId = (c.categoryId || '').trim();
+      if (catName && !existingNames.has(catName.toLowerCase())) {
+        const slug = catName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        const newCat = {
+          id: catId || `cat-${slug}`,
+          name: catName,
+          shortName: catName,
+          note: c.categoryNote || '',
+          isComingSoon: !!c.isComingSoon
+        };
+        result.push(newCat);
+        existingNames.add(catName.toLowerCase());
+        existingIds.add(newCat.id.toLowerCase());
+      }
+    });
+
+    return result;
   }
 
   getDefaultCourses() {

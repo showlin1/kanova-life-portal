@@ -48,11 +48,67 @@ export default function CourseDetailPage() {
 
   const title = course.title || course.name;
   const price = Number(course.price) || 0;
-  const img = course.imageUrl || '/images/course-1.jpg';
+  const img = wixClient.resolveImageUrl(course.image || course.imageUrl, '/images/course-1.jpg');
   const badge = course.badge || (course.isComingSoon ? 'Coming Soon' : 'Certified');
   const duration = course.duration || 'Full Day';
   const format = course.format || 'In-Person Classroom';
+  const certification = course.certification || 'WSIB Recognized';
   const bookingCourseId = course.id || course.slug || 'c-ifa-blended';
+
+  const locationsList = (course.locations && typeof course.locations === 'string')
+    ? course.locations.split(/[,;]/).map(s => s.trim()).filter(Boolean)
+    : ['Thunder Bay', 'Nipigon', 'Terrace Bay'];
+
+  const curriculumList = (course.curriculum && typeof course.curriculum === 'string')
+    ? course.curriculum.split(/\r?\n/).map(s => s.trim()).filter(Boolean)
+    : (Array.isArray(course.curriculum) && course.curriculum.length ? course.curriculum : [
+        'The Red Cross & Emergency Scene Management',
+        'Adult, Child & Infant CPR and AED Protocols',
+        'Choking Procedures (Conscious & Unconscious)',
+        'Cardiovascular Emergencies (Heart Attack, Stroke, Shock)',
+        'Severe Bleeding, Wound Care & Tourniquet Use',
+        'Bone, Joint & Muscle Injuries / Splinting',
+        'Head, Neck & Spinal Injury Stabilization',
+        'Sudden Medical Emergencies & Anaphylaxis (EpiPen)'
+      ]);
+
+  const highlightsList = (() => {
+    if (course.highlights && typeof course.highlights === 'string') {
+      const lines = course.highlights.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+      if (lines.length > 0) {
+        const defaultImgs = [
+          'https://static.wixstatic.com/media/2c3d7b_82a57891a9bf4c1f938f772967e22bbc~mv2.jpg',
+          'https://static.wixstatic.com/media/2c3d7b_8f2f7652e1834fa7a5174bdcb9aec024~mv2.jpg',
+          'https://static.wixstatic.com/media/2c3d7b_da911de336714a9cb0e32d5b2cec49b3~mv2.jpg'
+        ];
+        return lines.map((l, i) => {
+          const parts = l.split('|');
+          return {
+            title: parts[0]?.trim() || `Course Highlight ${i + 1}`,
+            desc: parts[1]?.trim() || parts[0]?.trim(),
+            img: defaultImgs[i % defaultImgs.length]
+          };
+        });
+      }
+    }
+    return [
+      {
+        title: 'Canadian Red Cross Certified',
+        desc: 'Earn a certified credential accepted across Canada. Gain genuine hands-on confidence to step up during unexpected emergencies.',
+        img: 'https://static.wixstatic.com/media/2c3d7b_82a57891a9bf4c1f938f772967e22bbc~mv2.jpg'
+      },
+      {
+        title: 'WSIB Regulation 1101 Compliant',
+        desc: 'Meets mandatory Ontario workplace safety requirements for workplace first aid attendants in commercial and industrial settings.',
+        img: 'https://static.wixstatic.com/media/2c3d7b_8f2f7652e1834fa7a5174bdcb9aec024~mv2.jpg'
+      },
+      {
+        title: 'Valid For 3 Full Years',
+        desc: 'Digital Red Cross certificate issued directly to your inbox within 24-48 business hours, valid nationwide for 3 full years.',
+        img: 'https://static.wixstatic.com/media/2c3d7b_da911de336714a9cb0e32d5b2cec49b3~mv2.jpg'
+      }
+    ];
+  })();
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -89,9 +145,9 @@ export default function CourseDetailPage() {
                     Training Locations:
                   </span>
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    <span className="serving-badge">📍 Thunder Bay</span>
-                    <span className="serving-badge">📍 Nipigon</span>
-                    <span className="serving-badge">📍 Terrace Bay</span>
+                    {locationsList.map((loc, i) => (
+                      <span key={i} className="serving-badge">📍 {loc}</span>
+                    ))}
                   </div>
                 </div>
 
@@ -102,7 +158,7 @@ export default function CourseDetailPage() {
                 <div style={{ display: 'flex', gap: '24px', marginBottom: '28px', fontSize: '0.92rem', color: '#475569', flexWrap: 'wrap' }}>
                   <div>⏱️ <strong>{duration}</strong></div>
                   <div>📋 <strong>{format}</strong></div>
-                  <div>🛡️ <strong>WSIB Recognized</strong></div>
+                  <div>🛡️ <strong>{certification}</strong></div>
                 </div>
 
                 <div className="course-action-bar" style={{ display: 'flex', alignItems: 'center', gap: '24px', paddingTop: '20px', borderTop: '1px solid var(--border)', flexWrap: 'wrap' }}>
@@ -129,27 +185,15 @@ export default function CourseDetailPage() {
               <h2 className="section-title">Why Complete This Certification?</h2>
             </div>
             <div className="highlights-grid">
-              <div className="highlight-card">
-                <img src="https://static.wixstatic.com/media/2c3d7b_82a57891a9bf4c1f938f772967e22bbc~mv2.jpg" alt="" className="highlight-img" />
-                <div className="highlight-body">
-                  <h3 className="highlight-title">Canadian Red Cross Certified</h3>
-                  <p className="highlight-desc">Earn a certified credential accepted across Canada. Gain genuine hands-on confidence to step up during unexpected emergencies.</p>
+              {highlightsList.map((h, i) => (
+                <div key={i} className="highlight-card">
+                  {h.img && <img src={h.img} alt="" className="highlight-img" />}
+                  <div className="highlight-body">
+                    <h3 className="highlight-title">{h.title}</h3>
+                    <p className="highlight-desc">{h.desc}</p>
+                  </div>
                 </div>
-              </div>
-              <div className="highlight-card">
-                <img src="https://static.wixstatic.com/media/2c3d7b_8f2f7652e1834fa7a5174bdcb9aec024~mv2.jpg" alt="" className="highlight-img" />
-                <div className="highlight-body">
-                  <h3 className="highlight-title">WSIB Regulation 1101 Compliant</h3>
-                  <p className="highlight-desc">Meets mandatory Ontario workplace safety requirements for workplace first aid attendants in commercial and industrial settings.</p>
-                </div>
-              </div>
-              <div className="highlight-card">
-                <img src="https://static.wixstatic.com/media/2c3d7b_da911de336714a9cb0e32d5b2cec49b3~mv2.jpg" alt="" className="highlight-img" />
-                <div className="highlight-body">
-                  <h3 className="highlight-title">Valid For 3 Full Years</h3>
-                  <p className="highlight-desc">Digital Red Cross certificate issued directly to your inbox within 24-48 business hours, valid nationwide for 3 full years.</p>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         </section>
@@ -166,31 +210,23 @@ export default function CourseDetailPage() {
                   Participants gain hands-on practice using certified manikins, training AEDs, bandages, and barrier devices:
                 </p>
                 <ul className="curriculum-list">
-                  <li className="curriculum-item">
-                    <span className="curriculum-check">✓</span> The Red Cross &amp; Emergency Scene Management
-                  </li>
-                  <li className="curriculum-item">
-                    <span className="curriculum-check">✓</span> Adult, Child &amp; Infant CPR and AED Protocols
-                  </li>
-                  <li className="curriculum-item">
-                    <span className="curriculum-check">✓</span> Choking Procedures (Conscious &amp; Unconscious)
-                  </li>
-                  <li className="curriculum-item">
-                    <span className="curriculum-check">✓</span> Cardiovascular Emergencies (Heart Attack, Stroke, Shock)
-                  </li>
-                  <li className="curriculum-item">
-                    <span className="curriculum-check">✓</span> Severe Bleeding, Wound Care &amp; Tourniquet Use
-                  </li>
-                  <li className="curriculum-item">
-                    <span className="curriculum-check">✓</span> Bone, Joint &amp; Muscle Injuries / Splinting
-                  </li>
-                  <li className="curriculum-item">
-                    <span className="curriculum-check">✓</span> Head, Neck &amp; Spinal Injury Stabilization
-                  </li>
-                  <li className="curriculum-item">
-                    <span className="curriculum-check">✓</span> Sudden Medical Emergencies &amp; Anaphylaxis (EpiPen)
-                  </li>
+                  {curriculumList.map((topic, i) => (
+                    <li key={i} className="curriculum-item">
+                      <span className="curriculum-check">✓</span> {topic}
+                    </li>
+                  ))}
                 </ul>
+
+                {course.prerequisites && (
+                  <div style={{ marginTop: '28px', padding: '16px 20px', background: '#f8fafc', borderRadius: '12px', borderLeft: '4px solid var(--primary)' }}>
+                    <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--secondary)', marginBottom: '6px' }}>
+                      📋 Prerequisites
+                    </h3>
+                    <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.92rem', lineHeight: 1.5 }}>
+                      {course.prerequisites}
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div>
