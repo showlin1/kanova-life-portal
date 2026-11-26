@@ -1,8 +1,8 @@
 // Wix Client for Kanova Life Course Booking Portal
 const WIX_CONFIG = {
-  clientId: '0e26fa75-841f-440d-8472-c6cec7ef4ec5',
-  siteId: 'e8d91b1e-743d-465b-852d-c4b3a038efcc',
-  apiBase: 'https://www.wixapis.com'
+  clientId: (typeof import.meta !== 'undefined' && import.meta.env?.VITE_WIX_CLIENT_ID) || '0e26fa75-841f-440d-8472-c6cec7ef4ec5',
+  siteId: (typeof import.meta !== 'undefined' && import.meta.env?.VITE_WIX_SITE_ID) || 'e8d91b1e-743d-465b-852d-c4b3a038efcc',
+  apiBase: (typeof import.meta !== 'undefined' && import.meta.env?.VITE_WIX_API_BASE) || 'https://www.wixapis.com'
 };
 
 class WixClient {

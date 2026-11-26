@@ -2,7 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 const SERVE_DIR = process.argv[2] 
   ? path.resolve(__dirname, process.argv[2]) 
   : (fs.existsSync(path.join(__dirname, 'dist')) ? path.join(__dirname, 'dist') : __dirname);
