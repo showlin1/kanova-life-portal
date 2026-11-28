@@ -10,9 +10,9 @@ const AdminPage = React.lazy(() => import('./pages/AdminPage'));
 import './styles.css';
 
 function parseRoute() {
-  const pathname = window.location.pathname.replace(/^\/|\/$/g, '').replace(/\.html$/, '');
-  const hash = window.location.hash.replace(/^#\/?/, '').split('?')[0].replace(/\.html$/, '');
-  const r = (hash || pathname || '').toLowerCase();
+  const hash = window.location.hash.replace(/^#\/?/, '').split('?')[0].replace(/\.html$/, '').toLowerCase();
+  const pathname = window.location.pathname.replace(/^\/|\/$/g, '').replace(/\.html$/, '').toLowerCase();
+  const r = hash || pathname || '';
 
   if (!r || r === 'home' || r === 'index') return 'home';
   if (r.startsWith('courses')) return 'courses';
@@ -29,11 +29,11 @@ export default function App() {
   const [route, setRoute] = useState(parseRoute);
 
   useEffect(() => {
-    // If opened directly as /admin.html or /courses, migrate URL to clean hash router format
+    // If opened directly as /book or /course-detail, sync URL to hash format
     const initialPath = window.location.pathname.replace(/^\/|\/$/g, '').replace(/\.html$/, '');
     if (initialPath && initialPath !== 'index' && !window.location.hash) {
       const search = window.location.search || '';
-      const target = search ? `${search}#/${initialPath}` : `#/${initialPath}`;
+      const target = `#/${initialPath}${search}`;
       window.history.replaceState({}, '', target);
     }
 
@@ -52,15 +52,21 @@ export default function App() {
         const url = new URL(a.href, window.location.origin);
         if (url.origin === window.location.origin) {
           e.preventDefault();
-          const cleanPath = url.pathname.replace(/^\/|\/$/g, '').replace(/\.html$/, '');
-          const search = url.search || '';
           let target = '';
-          if (cleanPath && cleanPath !== 'home' && cleanPath !== 'index') {
-            target = search ? `${search}#/${cleanPath}` : `#/${cleanPath}`;
+          if (a.getAttribute('href')?.startsWith('#')) {
+            target = a.getAttribute('href');
           } else {
-            target = search ? `/${search}` : '/';
+            const cleanPath = url.pathname.replace(/^\/|\/$/g, '').replace(/\.html$/, '');
+            const search = url.search || '';
+            if (cleanPath && cleanPath !== 'home' && cleanPath !== 'index') {
+              target = `#/${cleanPath}${search}`;
+            } else {
+              target = search ? `#/${search}` : '#/';
+            }
           }
-          window.history.pushState({}, '', target);
+          if (window.location.hash !== target) {
+            window.location.hash = target.startsWith('#') ? target.substring(1) : target;
+          }
           setRoute(parseRoute());
           window.scrollTo(0, 0);
         }

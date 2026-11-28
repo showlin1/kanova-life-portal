@@ -33,6 +33,18 @@ function copyDir(src, dest) {
 }
 copyDir(path.join(ROOT_DIR, 'images'), path.join(DIST_DIR, 'images'));
 
+// 4. Create HTML fallbacks for direct routing
+const indexHtmlPath = path.join(DIST_DIR, 'index.html');
+if (fs.existsSync(indexHtmlPath)) {
+  const routes = ['book', 'courses', 'course-detail', 'locations', 'blog', 'blog-detail', 'admin'];
+  for (const r of routes) {
+    fs.copyFileSync(indexHtmlPath, path.join(DIST_DIR, `${r}.html`));
+    const subDir = path.join(DIST_DIR, r);
+    fs.mkdirSync(subDir, { recursive: true });
+    fs.copyFileSync(indexHtmlPath, path.join(subDir, 'index.html'));
+  }
+}
+
 const duration = Date.now() - startTime;
 console.log(`\n✓ Pure React SPA successfully built into dist/ in ${duration}ms\n`);
 

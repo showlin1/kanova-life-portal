@@ -140,6 +140,10 @@ class WixClient {
 
   // --- COUPONS ---
   async getCoupons() {
+    const defaultCoupons = [
+      { id: 'c-kanova15', code: 'KANOVA15', discountType: 'PERCENT', discountValue: 10, active: true, description: '10% off any course booking' },
+      { id: 'c-save25', code: 'SAVE25', discountType: 'FIXED', discountValue: 25, minAmount: 100, active: true, description: '$25 off certification courses' }
+    ];
     try {
       const res = await this.fetchApi('/wix-data/v2/items/query', {
         method: 'POST',
@@ -148,17 +152,17 @@ class WixClient {
           query: { paging: { limit: 50 } }
         })
       });
-      const data = await res.json();
-      if (data.dataItems) {
+      const data = await res.json().catch(() => ({}));
+      if (data.dataItems && Array.isArray(data.dataItems) && data.dataItems.length > 0) {
         return data.dataItems.map(item => ({
           id: item.id,
           ...item.data
         }));
       }
-      return [];
+      return defaultCoupons;
     } catch (e) {
       console.error('Error fetching coupons:', e);
-      return [];
+      return defaultCoupons;
     }
   }
 

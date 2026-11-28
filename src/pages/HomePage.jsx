@@ -272,7 +272,7 @@ export default function HomePage() {
                         return (
                           <a
                             key={course.id || title}
-                            href={`/course-detail?course=${linkId}`}
+                            href={`#/course-detail?course=${linkId}`}
                             className="course-card"
                           >
                             <div className="course-img-wrapper">

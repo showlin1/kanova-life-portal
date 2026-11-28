@@ -118,7 +118,7 @@ export default function CourseDetailPage() {
         <section className="detail-hero">
           <div className="container">
             <div style={{ marginBottom: '20px' }}>
-              <a href="/courses" style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <a href="#/courses" style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                 &larr; Back to all courses
               </a>
             </div>
@@ -163,7 +163,7 @@ export default function CourseDetailPage() {
                       ${price.toFixed(2)} CAD
                     </div>
                   </div>
-                  <a href={`/book?courseId=${bookingCourseId}`} className="btn btn-primary btn-lg" style={{ flex: 1, minWidth: 'min(100%, 200px)', textAlign: 'center' }}>
+                  <a href={`#/book?courseId=${bookingCourseId}`} className="btn btn-primary btn-lg" style={{ flex: 1, minWidth: 'min(100%, 200px)', textAlign: 'center' }}>
                     Book This Course &rarr;
                   </a>
                 </div>
