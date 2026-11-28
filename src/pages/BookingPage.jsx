@@ -103,7 +103,7 @@ export default function BookingPage() {
   };
 
   const handleCourseChange = (courseId) => {
-    const found = courses.find(c => c.id === courseId || c.slug === courseId);
+    const found = courses.find(c => c.id === courseId || c.slug === courseId || c._id === courseId);
     if (found) {
       setSelectedCourse(found);
       setPromoStatus(null);
@@ -116,7 +116,7 @@ export default function BookingPage() {
     setIsApplyingPromo(true);
     try {
       const basePrice = Number(selectedCourse.price) || 0;
-      const res = await wixClient.validateCoupon(promoCode, basePrice);
+      const res = await wixClient.validateCoupon(promoCode, basePrice, selectedCourse);
       setPromoStatus(res);
     } catch (err) {
       setPromoStatus({ valid: false, message: 'Error checking coupon' });
@@ -140,6 +140,7 @@ export default function BookingPage() {
     try {
       checkoutRes = await wixClient.createWixCheckout({
         courseId: selectedCourse._id || selectedCourse.id,
+        course: selectedCourse,
         title: `${courseTitle} - ${selectedSession.date}`,
         sessionDate: selectedSession.date,
         city,
@@ -147,7 +148,8 @@ export default function BookingPage() {
         studentName: studentName.trim(),
         studentEmail: studentEmail.trim(),
         studentPhone: studentPhone.trim(),
-        couponCode: appliedCouponCode
+        couponCode: appliedCouponCode,
+        existingCartId: (promoStatus && promoStatus.valid && promoStatus.cartId) ? promoStatus.cartId : undefined
       });
     } catch (payErr) {
       console.error('Wix Checkout creation error:', payErr);

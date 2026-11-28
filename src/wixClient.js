@@ -5,6 +5,65 @@ const WIX_CONFIG = {
   apiBase: (typeof import.meta !== 'undefined' && import.meta.env?.VITE_WIX_API_BASE) || 'https://www.wixapis.com'
 };
 
+// Mapping of Course IDs / Slugs / Aliases to Wix Stores Catalog V3 Product IDs
+const COURSE_STORE_PRODUCT_MAP = {
+  // 1. Intermediate First Aid Courses
+  'c-ifa-blended': '4ab777c8-1adc-400e-a2ff-9c9dbebab5df',
+  'intermediate-first-aid-cpr-aed-level-c-blended': '4ab777c8-1adc-400e-a2ff-9c9dbebab5df',
+  'c2': '4ab777c8-1adc-400e-a2ff-9c9dbebab5df',
+
+  'c-ifa-recert': 'cf13bfb6-e4d9-4604-b35c-9f63e849c110',
+  'intermediate-first-aid-cpr-aed-level-c-recertification': 'cf13bfb6-e4d9-4604-b35c-9f63e849c110',
+  'c1': 'cf13bfb6-e4d9-4604-b35c-9f63e849c110',
+
+  'c-ifa-2day': 'f87d652b-d666-4999-9131-f7fbca9adb9c',
+  'intermediate-first-aid-cpr-aed-level-c-2-day': 'f87d652b-d666-4999-9131-f7fbca9adb9c',
+  'c3': 'f87d652b-d666-4999-9131-f7fbca9adb9c',
+
+  // 2. Basic First Aid Courses
+  'c-bfa-blended': '29234d10-a0a4-4045-9197-5d53bf196718',
+  'basic-first-aid-cpr-aed-level-c-blended': '29234d10-a0a4-4045-9197-5d53bf196718',
+  'c5': '29234d10-a0a4-4045-9197-5d53bf196718',
+
+  'c-bfa-1day': 'dfdc8415-2b47-4e71-9a60-b4bf503c4536',
+  'basic-first-aid-cpr-aed-level-c-1-day': 'dfdc8415-2b47-4e71-9a60-b4bf503c4536',
+  'c4': 'dfdc8415-2b47-4e71-9a60-b4bf503c4536',
+
+  // 3. CPR Courses
+  'c-cpr-blended': 'e0ce4fd5-462d-4827-bc77-eba9dbb3bebb',
+  'cpr-aed-level-c-blended': 'e0ce4fd5-462d-4827-bc77-eba9dbb3bebb',
+
+  'c-cpr-recert': '11da034d-3462-4c69-8901-2d36451d6f40',
+  'cpr-aed-level-c-recertification': '11da034d-3462-4c69-8901-2d36451d6f40',
+
+  // 4. Basic Life Support (BLS)
+  'c-bls-hcp': '419f41f1-dbdb-41f1-b648-1fef638ffa85',
+  'basic-life-support-cpr-hcp': '419f41f1-dbdb-41f1-b648-1fef638ffa85',
+
+  'c-bls-recert': 'fd02c002-e990-4d02-b0c6-21a70240cb69',
+  'basic-life-support-cpr-hcp-recertification': 'fd02c002-e990-4d02-b0c6-21a70240cb69',
+
+  // 5. Marine First Aid Courses
+  'c-marine-2day': '0d500ce9-0501-48fe-923e-fed246f43bf5',
+  'marine-basic-first-aid-cpr-aed-level-c-2-day': '0d500ce9-0501-48fe-923e-fed246f43bf5',
+  'c7': '0d500ce9-0501-48fe-923e-fed246f43bf5',
+
+  // 6. Mask Fit Testing
+  'c-mask-n95': 'f1c91699-e203-4b63-91da-26374473d9ec',
+  'n95-mask-fit-testing-qualitative': 'f1c91699-e203-4b63-91da-26374473d9ec',
+
+  'c-mask-halfface': '4bd01d44-f3f9-44d8-a9c6-53f41fcf0e07',
+  'half-face-respirator-fit-testing-qualitative': '4bd01d44-f3f9-44d8-a9c6-53f41fcf0e07',
+
+  'c-mask-fullface': 'da484b19-30af-4dc6-a04a-1584e9ab3c62',
+  'full-face-respirator-fit-testing-qualitative': 'da484b19-30af-4dc6-a04a-1584e9ab3c62',
+
+  // 7. Child Care First Aid
+  'c-childcare-2day': '63d42cc4-9393-4f11-86e3-b733ccffd3a2',
+  'standard-child-care-first-aid-cpr-aed-level-b-2-day': '63d42cc4-9393-4f11-86e3-b733ccffd3a2',
+  'c6': '63d42cc4-9393-4f11-86e3-b733ccffd3a2'
+};
+
 class WixClient {
   constructor() {
     this.token = null;
@@ -195,39 +254,130 @@ class WixClient {
     return res.json();
   }
 
-  async validateCoupon(code, coursePrice) {
-    if (!code) return { valid: false, message: 'Please enter a coupon code' };
-    const coupons = await this.getCoupons();
+  resolveStoreProductId(courseOrId) {
+    if (!courseOrId) return '4ab777c8-1adc-400e-a2ff-9c9dbebab5df';
+    if (typeof courseOrId === 'string') {
+      const clean = courseOrId.trim().toLowerCase();
+      if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(courseOrId.trim())) {
+        return courseOrId.trim();
+      }
+      if (COURSE_STORE_PRODUCT_MAP[clean]) return COURSE_STORE_PRODUCT_MAP[clean];
+      if (COURSE_STORE_PRODUCT_MAP[courseOrId]) return COURSE_STORE_PRODUCT_MAP[courseOrId];
+      for (const [k, v] of Object.entries(COURSE_STORE_PRODUCT_MAP)) {
+        if (clean.includes(k) || k.includes(clean)) return v;
+      }
+      return '4ab777c8-1adc-400e-a2ff-9c9dbebab5df';
+    }
+
+    const id = (courseOrId.id || courseOrId._id || '').toLowerCase();
+    const slug = (courseOrId.slug || '').toLowerCase();
+    const aliasId = (courseOrId.aliasId || '').toLowerCase();
+    const title = (courseOrId.title || courseOrId.name || '').toLowerCase();
+
+    if (id && COURSE_STORE_PRODUCT_MAP[id]) return COURSE_STORE_PRODUCT_MAP[id];
+    if (slug && COURSE_STORE_PRODUCT_MAP[slug]) return COURSE_STORE_PRODUCT_MAP[slug];
+    if (aliasId && COURSE_STORE_PRODUCT_MAP[aliasId]) return COURSE_STORE_PRODUCT_MAP[aliasId];
+
+    for (const [k, v] of Object.entries(COURSE_STORE_PRODUCT_MAP)) {
+      if (k === id || k === slug || (title && (title.includes(k) || k.includes(title)))) {
+        return v;
+      }
+    }
+    return '4ab777c8-1adc-400e-a2ff-9c9dbebab5df';
+  }
+
+  async validateCoupon(code, coursePrice = 0, course = null) {
+    if (!code || !code.trim()) {
+      return { valid: false, message: 'Please enter a coupon code' };
+    }
     const cleanCode = code.trim().toUpperCase();
-    const coupon = coupons.find(c => c.code && c.code.toUpperCase() === cleanCode);
+    const storeProductId = this.resolveStoreProductId(course);
 
-    if (!coupon) {
-      return { valid: false, message: `Invalid coupon code: "${code}"` };
-    }
-    if (coupon.active === false) {
-      return { valid: false, message: 'This coupon is inactive.' };
-    }
-    if (coupon.minAmount && coursePrice < coupon.minAmount) {
-      return { valid: false, message: `Minimum order amount of $${coupon.minAmount} required.` };
-    }
+    try {
+      // 1. Create a live visitor-owned cart referencing the Wix Stores Catalog V3 item
+      const cartRes = await this.fetchApi('/ecom/v2/carts', {
+        method: 'POST',
+        body: JSON.stringify({
+          catalogItems: [
+            {
+              catalogReference: {
+                appId: '215238eb-22a5-4c36-9e7b-e7c08025e04e', // Wix Stores Catalog
+                catalogItemId: storeProductId
+              },
+              quantity: 1
+            }
+          ]
+        })
+      });
+      const cartData = await cartRes.json().catch(() => ({}));
+      if (!cartRes.ok || !cartData?.cart?.id) {
+        throw new Error(cartData?.message || 'Failed to initialize cart for coupon validation');
+      }
 
-    let discount = 0;
-    if (coupon.discountType === 'PERCENT') {
-      discount = (coursePrice * (Number(coupon.discountValue) || 0)) / 100;
-    } else {
-      discount = Number(coupon.discountValue) || 0;
+      const cartId = cartData.cart.id;
+
+      // 2. Validate dynamically against Wix Discounts & Coupons engine
+      const couponRes = await this.fetchApi(`/ecom/v2/carts/${cartId}/add-coupon`, {
+        method: 'POST',
+        body: JSON.stringify({
+          coupon: { code: cleanCode }
+        })
+      });
+      const couponData = await couponRes.json().catch(() => ({}));
+
+      if (!couponRes.ok || !couponData?.cart) {
+        const errMsg = couponData?.details?.applicationError?.description || couponData?.message || `Invalid coupon code: "${cleanCode}"`;
+        return {
+          valid: false,
+          code: cleanCode,
+          message: errMsg
+        };
+      }
+
+      // 3. Extract exact discount calculations returned directly from Wix eCommerce backend
+      const updatedCart = couponData.cart;
+      let discountAmount = 0;
+      let couponName = cleanCode;
+
+      if (updatedCart.tcAppliedDiscounts && updatedCart.tcAppliedDiscounts.length > 0) {
+        const applied = updatedCart.tcAppliedDiscounts[0];
+        if (applied.coupon?.amount?.amount) {
+          discountAmount = parseFloat(applied.coupon.amount.amount) || 0;
+        }
+        if (applied.coupon?.name) {
+          couponName = applied.coupon.name;
+        }
+      } else if (updatedCart.lineItems?.[0]?.discounts?.[0]?.amountOff?.amount) {
+        discountAmount = parseFloat(updatedCart.lineItems[0].discounts[0].amountOff.amount) || 0;
+      }
+
+      const origPrice = Number(coursePrice) || parseFloat(updatedCart.lineItems?.[0]?.pricing?.breakdown?.fullPrice?.amount) || 145;
+      if (discountAmount <= 0 && updatedCart.subtotal?.amount) {
+        const subtotal = parseFloat(updatedCart.subtotal.amount) || 0;
+        if (origPrice > subtotal) {
+          discountAmount = origPrice - subtotal;
+        }
+      }
+
+      const finalPrice = Math.max(0, origPrice - discountAmount);
+
+      return {
+        valid: true,
+        code: cleanCode,
+        couponName,
+        discount: discountAmount,
+        finalPrice,
+        cartId,
+        message: `Coupon "${cleanCode}" applied! You saved $${discountAmount.toFixed(2)}.`
+      };
+    } catch (err) {
+      console.warn('Wix native coupon validation error:', err);
+      return {
+        valid: false,
+        code: cleanCode,
+        message: err.message || `Unable to validate coupon "${cleanCode}".`
+      };
     }
-
-    discount = Math.min(discount, coursePrice);
-    const finalPrice = Math.max(0, coursePrice - discount);
-
-    return {
-      valid: true,
-      coupon,
-      discount,
-      finalPrice,
-      message: `Coupon "${coupon.code}" applied! You saved $${discount.toFixed(2)}.`
-    };
   }
 
   // --- BOOKINGS ---
@@ -246,6 +396,7 @@ class WixClient {
   async createWixCheckout(checkoutDetails) {
     const {
       courseId,
+      course,
       title,
       sessionDate,
       city,
@@ -253,11 +404,13 @@ class WixClient {
       studentName,
       studentEmail,
       studentPhone,
-      couponCode
+      couponCode,
+      existingCartId
     } = checkoutDetails;
 
-    if (!courseId) {
-      throw new Error('Selected course is missing a catalog ID.');
+    const storeProductId = this.resolveStoreProductId(course || courseId);
+    if (!storeProductId) {
+      throw new Error('Selected course is missing a valid catalog ID.');
     }
 
     const noteParts = [
@@ -268,35 +421,49 @@ class WixClient {
     ].filter(Boolean);
     const noteText = noteParts.join(' | ');
 
-    // 1. Create a fresh visitor-owned Cart V2 referencing the CMS Courses catalog item
-    const cartRes = await this.fetchApi('/ecom/v2/carts', {
-      method: 'POST',
-      body: JSON.stringify({
-        catalogItems: [
-          {
-            catalogReference: {
-              appId: 'e593b0bd-b783-45b8-97c2-873d42aacaf4',
-              catalogItemId: courseId,
-              options: {
-                collectionId: 'Courses'
-              }
-            },
-            quantity: 1
-          }
-        ],
-        ...(noteText ? { note: noteText } : {})
-      })
-    });
+    let cartId = existingCartId;
 
-    const cartData = await cartRes.json().catch(() => ({}));
-    if (!cartRes.ok || !cartData?.cart?.id) {
-      const errMsg = cartData?.message || cartData?.details?.applicationError?.description || `Failed to create Wix checkout cart (${cartRes.status})`;
-      throw new Error(errMsg);
+    // 1. If no pre-validated cart exists, create a new one with the Wix Stores item
+    if (!cartId) {
+      const cartRes = await this.fetchApi('/ecom/v2/carts', {
+        method: 'POST',
+        body: JSON.stringify({
+          catalogItems: [
+            {
+              catalogReference: {
+                appId: '215238eb-22a5-4c36-9e7b-e7c08025e04e', // Wix Stores Catalog
+                catalogItemId: storeProductId
+              },
+              quantity: 1
+            }
+          ],
+          ...(noteText ? { note: noteText } : {})
+        })
+      });
+
+      const cartData = await cartRes.json().catch(() => ({}));
+      if (!cartRes.ok || !cartData?.cart?.id) {
+        const errMsg = cartData?.message || cartData?.details?.applicationError?.description || `Failed to create Wix checkout cart (${cartRes.status})`;
+        throw new Error(errMsg);
+      }
+      cartId = cartData.cart.id;
+
+      // 2. If coupon code was supplied, apply it dynamically to the cart
+      if (couponCode && couponCode.trim()) {
+        try {
+          await this.fetchApi(`/ecom/v2/carts/${cartId}/add-coupon`, {
+            method: 'POST',
+            body: JSON.stringify({
+              coupon: { code: couponCode.trim().toUpperCase() }
+            })
+          });
+        } catch (couponErr) {
+          console.warn('Wix Cart coupon application note:', couponErr);
+        }
+      }
     }
 
-    const cartId = cartData.cart.id;
-
-    // 2. Attach student contact info to prefill Wix Checkout (best-effort, non-blocking)
+    // 3. Attach student contact info and course details note to cart
     try {
       const cleanName = (studentName || '').trim();
       const [firstName, ...restName] = cleanName ? cleanName.split(/\s+/) : [];
@@ -320,20 +487,6 @@ class WixClient {
       }
     } catch (patchErr) {
       console.warn('Wix Cart customerInfo update warning:', patchErr);
-    }
-
-    // 3. Apply coupon code on Wix Cart if it also exists in Wix Marketing Coupons (best-effort)
-    if (couponCode && couponCode.trim()) {
-      try {
-        await this.fetchApi(`/ecom/v2/carts/${cartId}/add-coupon`, {
-          method: 'POST',
-          body: JSON.stringify({
-            coupon: { code: couponCode.trim().toUpperCase() }
-          })
-        });
-      } catch (couponErr) {
-        console.warn('Wix Cart coupon sync note:', couponErr);
-      }
     }
 
     // 4. Generate official Wix Headless hosted checkout Redirect Session URL
