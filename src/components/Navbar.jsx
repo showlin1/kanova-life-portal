@@ -5,8 +5,7 @@ export default function Navbar({ activePage = 'home' }) {
     <header className="navbar">
       <div className="container nav-container">
         <a href="/" className="brand">
-          <span className="brand-plus">+</span>
-          <span>Kanova Life</span>
+          <img src="/images/logo.png" alt="Kanova Life" className="brand-logo" />
         </a>
         <ul className="nav-menu">
           <li>

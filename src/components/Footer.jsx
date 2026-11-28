@@ -5,10 +5,9 @@ export default function Footer() {
     <footer className="footer">
       <div className="container footer-grid">
         <div>
-          <div className="brand" style={{ color: '#fff', marginBottom: '16px' }}>
-            <span className="brand-plus">+</span>
-            <span>Kanova Life</span>
-          </div>
+          <a href="/" className="brand" style={{ marginBottom: '16px', display: 'inline-block' }}>
+            <img src="/images/logo-light.png" alt="Kanova Life" className="brand-logo footer-logo" />
+          </a>
           <p style={{ maxWidth: '360px', lineHeight: 1.6, marginBottom: '16px' }}>
             Canadian Red Cross Training Partner based in Thunder Bay, ON. Certified First Aid, CPR/AED and BLS courses for workplaces and individuals.
           </p>
