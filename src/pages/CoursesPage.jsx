@@ -112,7 +112,11 @@ export default function CoursesPage() {
                         const linkId = course.id || course.slug;
 
                         return (
-                          <div key={course.id || title} className="course-card">
+                          <a
+                            key={course.id || title}
+                            href={`/course-detail?course=${linkId}`}
+                            className="course-card"
+                          >
                             <div className="course-img-wrapper">
                               <img src={img} alt={title} className="course-img" loading="lazy" />
                             </div>
@@ -123,12 +127,12 @@ export default function CoursesPage() {
                                 <span className="course-price" style={course.isComingSoon ? { color: '#64748b' } : {}}>
                                   ${price.toFixed(2)}
                                 </span>
-                                <a href={`/course-detail?course=${linkId}`} className="course-link">
+                                <span className="course-link">
                                   Learn More &rarr;
-                                </a>
+                                </span>
                               </div>
                             </div>
-                          </div>
+                          </a>
                         );
                       })}
                     </div>

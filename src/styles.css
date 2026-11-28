@@ -125,8 +125,12 @@ a { color: inherit; text-decoration: none; }
   border: 1px solid var(--border); overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); transition: transform 0.25s, box-shadow 0.25s;
   display: flex; flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
 }
 .course-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+.course-card:hover .course-link { color: var(--primary); text-decoration: underline; }
 .course-img-wrapper { aspect-ratio: 4 / 3; overflow: hidden; background: #e2e8f0; position: relative; }
 .course-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s; }
 .course-card:hover .course-img { transform: scale(1.04); }
