@@ -4,7 +4,6 @@ const { execSync } = require('child_process');
 
 const ROOT_DIR = __dirname;
 const DIST_DIR = path.join(ROOT_DIR, 'dist');
-const WIX_SITE_DIR = path.join(ROOT_DIR, 'wix-site');
 
 console.log('Building Kanova Life React SPA for production...\n');
 const startTime = Date.now();
@@ -34,11 +33,6 @@ function copyDir(src, dest) {
 }
 copyDir(path.join(ROOT_DIR, 'images'), path.join(DIST_DIR, 'images'));
 
-// 4. Clean wix-site/ and sync dist/ to wix-site/
-if (fs.existsSync(WIX_SITE_DIR)) {
-  fs.rmSync(WIX_SITE_DIR, { recursive: true, force: true });
-}
-copyDir(DIST_DIR, WIX_SITE_DIR);
-
 const duration = Date.now() - startTime;
-console.log(`\n✓ Pure React SPA successfully built and synced to wix-site/ in ${duration}ms\n`);
+console.log(`\n✓ Pure React SPA successfully built into dist/ in ${duration}ms\n`);
+
