@@ -179,10 +179,14 @@ export default function CourseDetailPage() {
               <p className="section-eyebrow">COURSE HIGHLIGHTS</p>
               <h2 className="section-title">Why Complete This Certification?</h2>
             </div>
-            <div className="highlights-grid">
+            <div className="highlights-grid detail-highlights-grid">
               {highlightsList.map((h, i) => (
-                <div key={i} className="highlight-card">
-                  {h.img && <img src={h.img} alt="" className="highlight-img" />}
+                <div key={i} className="highlight-card detail-highlight-card">
+                  {h.img && (
+                    <div className="detail-highlight-img-wrap">
+                      <img src={h.img} alt={h.title} className="detail-highlight-img" />
+                    </div>
+                  )}
                   <div className="highlight-body">
                     <h3 className="highlight-title">{h.title}</h3>
                     <p className="highlight-desc">{h.desc}</p>
