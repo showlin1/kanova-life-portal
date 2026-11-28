@@ -102,11 +102,6 @@ export default function CoursesPage() {
                           {cat.isComingSoon && <span className="badge-soon">Coming Soon</span>}
                         </h2>
                       </div>
-                      {cat.note && (
-                        <div className="category-note" style={cat.isComingSoon ? { background: '#fffbeb', color: '#b45309', borderLeftColor: '#f59e0b' } : {}}>
-                          <strong>Notice:</strong> {cat.note}
-                        </div>
-                      )}
                     </div>
                     <div className="course-grid">
                       {catCourses.map(course => {

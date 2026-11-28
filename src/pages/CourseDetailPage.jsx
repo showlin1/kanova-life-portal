@@ -131,11 +131,6 @@ export default function CourseDetailPage() {
                 <span className="course-badge" style={{ marginBottom: '12px', display: 'inline-block' }}>
                   {badge}
                 </span>
-                {course.categoryNote && (
-                  <div className="category-note" style={{ marginBottom: '14px' }}>
-                    <strong>Notice:</strong> {course.categoryNote}
-                  </div>
-                )}
                 <h1 className="detail-title" style={{ fontWeight: 800, color: 'var(--secondary)', lineHeight: 1.25, marginBottom: '16px' }}>
                   {title}
                 </h1>
@@ -155,7 +150,7 @@ export default function CourseDetailPage() {
                   {course.description || 'Comprehensive Canadian Red Cross First Aid & CPR training meets all Ontario WSIB workplace regulations.'}
                 </p>
 
-                <div style={{ display: 'flex', gap: '24px', marginBottom: '28px', fontSize: '0.92rem', color: '#475569', flexWrap: 'wrap' }}>
+                <div className="detail-meta" style={{ display: 'flex', gap: '12px 24px', marginBottom: '28px', fontSize: '0.92rem', color: '#475569', flexWrap: 'wrap' }}>
                   <div>⏱️ <strong>{duration}</strong></div>
                   <div>📋 <strong>{format}</strong></div>
                   <div>🛡️ <strong>{certification}</strong></div>
@@ -168,7 +163,7 @@ export default function CourseDetailPage() {
                       ${price.toFixed(2)} CAD
                     </div>
                   </div>
-                  <a href={`/book?courseId=${bookingCourseId}`} className="btn btn-primary btn-lg" style={{ flex: 1, minWidth: '200px', textAlign: 'center' }}>
+                  <a href={`/book?courseId=${bookingCourseId}`} className="btn btn-primary btn-lg" style={{ flex: 1, minWidth: 'min(100%, 200px)', textAlign: 'center' }}>
                     Book This Course &rarr;
                   </a>
                 </div>
