@@ -87,13 +87,9 @@ export default function BlogDetailPage() {
                 </div>
                 <div className="article-body">
                   {paragraphs.map((p, idx) => {
-                    if (p.startsWith('### ')) {
-                      return <h3 key={idx}>{p.replace('### ', '')}</h3>;
-                    }
-                    if (p.startsWith('## ')) {
-                      return <h2 key={idx}>{p.replace('## ', '')}</h2>;
-                    }
-                    return <p key={idx}>{p}</p>;
+                    const text = p.replace(/^#{1,6}\s+/, '').trim();
+                    if (!text) return null;
+                    return <p key={idx}>{text}</p>;
                   })}
                 </div>
 

@@ -503,20 +503,17 @@ We strongly advise booking your recertification training at least 30 to 60 days 
         excerpt: "Acting quickly in a cardiac emergency saves lives. A simple refresher on the essential steps you will master in class.",
         content: `Cardiac arrest can happen anywhere—at home, at work, or in public. When a person's heart stops beating, brain damage can begin in as little as 4 minutes, and survival chances drop by 10% for every minute without CPR. Here are the 5 vital steps taught in Canadian Red Cross courses:
 
-### Step 1: Check the Scene & Responsiveness
-Before rushing in, ensure the scene is safe for you. Tap the victim's shoulders firmly and shout loudly: 'Are you okay?'. Look for normal chest rise and fall for no more than 5 to 10 seconds.
+Step 1: Check the Scene & Responsiveness Before rushing in, ensure the scene is safe for you. Tap the victim's shoulders firmly and shout loudly: 'Are you okay?'. Look for normal chest rise and fall for no more than 5 to 10 seconds.
 
-### Step 2: Call 911 & Request an AED
-If the person is unresponsive and not breathing normally, point directly at a specific bystander and say: 'You, call 911 and bring an AED!'. If you are alone, call 911 on speakerphone immediately.
+Step 2: Call 911 & Request an AED If the person is unresponsive and not breathing normally, point directly at a specific bystander and say: 'You, call 911 and bring an AED!'. If you are alone, call 911 on speakerphone immediately.
 
-### Step 3: Position Your Hands in the Center of the Chest
-Place the heel of one hand in the center of the person's chest (lower half of the breastbone). Interlock the fingers of your other hand on top. Keep your arms straight and position your shoulders directly over your hands.
+Step 3: Position Your Hands in the Center of the Chest Place the heel of one hand in the center of the person's chest (lower half of the breastbone). Interlock the fingers of your other hand on top. Keep your arms straight and position your shoulders directly over your hands.
 
-### Step 4: Push Hard and Fast (100–120 Compressions Per Minute)
-Compress the chest at least 5 cm (2 inches) deep at a rate of 100 to 120 beats per minute (to the beat of 'Stayin' Alive'). Allow complete chest recoil between each push. If trained in rescue breaths, deliver 30 compressions followed by 2 breaths; if untrained, perform continuous hands-only CPR.
+Step 4: Push Hard and Fast (100–120 Compressions Per Minute) Compress the chest at least 5 cm (2 inches) deep at a rate of 100 to 120 beats per minute (to the beat of 'Stayin' Alive'). Allow complete chest recoil between each push. If trained in rescue breaths, deliver 30 compressions followed by 2 breaths; if untrained, perform continuous hands-only CPR.
 
-### Step 5: Turn On the AED Immediately
-As soon as the Automated External Defibrillator arrives, turn it on and follow its clear voice prompts. Apply the electrode pads to the person's bare chest as shown on the diagrams, ensure no one is touching the person, and press the shock button if advised by the machine.\n\nTaking an in-person first aid and CPR course gives you the hands-on muscle memory that makes these steps second nature in a real crisis.`
+Step 5: Turn On the AED Immediately As soon as the Automated External Defibrillator arrives, turn it on and follow its clear voice prompts. Apply the electrode pads to the person's bare chest as shown on the diagrams, ensure no one is touching the person, and press the shock button if advised by the machine.
+
+Taking an in-person first aid and CPR course gives you the hands-on muscle memory that makes these steps second nature in a real crisis.`
       }
     ];
   }

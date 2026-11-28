@@ -311,44 +311,56 @@ export default function HomePage() {
               <h2 className="section-title">Course Highlights</h2>
               <p className="section-desc">Why thousands of Northern Ontario professionals trust our programs.</p>
             </div>
-            <div className="highlights-grid">
-              <div className="highlight-card">
-                <img src="https://static.wixstatic.com/media/2c3d7b_39839bc5388e4600b74859f9a2c7f3a1~mv2.jpg" alt="" className="highlight-img" />
+            <div className="highlights-grid home-highlights-grid">
+              <div className="highlight-card home-highlight-card">
+                <div className="home-highlight-img-wrap">
+                  <img src="https://static.wixstatic.com/media/2c3d7b_39839bc5388e4600b74859f9a2c7f3a1~mv2.jpg" alt="Canadian Red Cross Certified" className="home-highlight-img" />
+                </div>
                 <div className="highlight-body">
                   <h3 className="highlight-title">Canadian Red Cross Certified</h3>
                   <p className="highlight-desc">Earn an Intermediate First Aid certification recognized across Canada by employers and colleges.</p>
                 </div>
               </div>
-              <div className="highlight-card">
-                <img src="https://static.wixstatic.com/media/2c3d7b_82a57891a9bf4c1f938f772967e22bbc~mv2.jpg" alt="" className="highlight-img" />
+              <div className="highlight-card home-highlight-card">
+                <div className="home-highlight-img-wrap">
+                  <img src="https://static.wixstatic.com/media/2c3d7b_82a57891a9bf4c1f938f772967e22bbc~mv2.jpg" alt="WSIB-Compliant Training" className="home-highlight-img" />
+                </div>
                 <div className="highlight-body">
                   <h3 className="highlight-title">WSIB-Compliant Training</h3>
                   <p className="highlight-desc">Meet Ontario workplace health and safety legislative training requirements with confidence.</p>
                 </div>
               </div>
-              <div className="highlight-card">
-                <img src="https://static.wixstatic.com/media/2c3d7b_8f2f7652e1834fa7a5174bdcb9aec024~mv2.jpg" alt="" className="highlight-img" />
+              <div className="highlight-card home-highlight-card">
+                <div className="home-highlight-img-wrap">
+                  <img src="https://static.wixstatic.com/media/2c3d7b_8f2f7652e1834fa7a5174bdcb9aec024~mv2.jpg" alt="Flexible Learning Options" className="home-highlight-img" />
+                </div>
                 <div className="highlight-body">
                   <h3 className="highlight-title">Flexible Learning Options</h3>
                   <p className="highlight-desc">Choose in-class or blended learning options to fit demanding work and personal schedules.</p>
                 </div>
               </div>
-              <div className="highlight-card">
-                <img src="https://static.wixstatic.com/media/2c3d7b_da911de336714a9cb0e32d5b2cec49b3~mv2.jpg" alt="" className="highlight-img" />
+              <div className="highlight-card home-highlight-card">
+                <div className="home-highlight-img-wrap">
+                  <img src="https://static.wixstatic.com/media/2c3d7b_da911de336714a9cb0e32d5b2cec49b3~mv2.jpg" alt="3-Year Certification Validity" className="home-highlight-img" />
+                </div>
                 <div className="highlight-body">
                   <h3 className="highlight-title">3-Year Certification Validity</h3>
                   <p className="highlight-desc">Intermediate First Aid and CPR Level C certifications remain valid for up to three years.</p>
                 </div>
               </div>
-              <div className="highlight-card">
-                <img src="https://static.wixstatic.com/media/2c3d7b_f0327b6872624c5bbb9b7e00a185e1c4~mv2.jpg" alt="" className="highlight-img" />
+              <div className="highlight-card home-highlight-card">
+                <div className="home-highlight-img-wrap">
+                  <img src="https://static.wixstatic.com/media/2c3d7b_f0327b6872624c5bbb9b7e00a185e1c4~mv2.jpg" alt="Recertification Available" className="home-highlight-img" />
+                </div>
                 <div className="highlight-body">
                   <h3 className="highlight-title">Recertification Available</h3>
                   <p className="highlight-desc">Keep your certification active with a one-day recertification course at a discounted rate.</p>
                 </div>
               </div>
-              <div className="highlight-card">
-                <img src="https://static.wixstatic.com/media/2c3d7b_fa9106025dc2418188e9f01cf93c78c4~mv2.jpg" alt="" className="highlight-img" />
+              <div className="highlight-card home-highlight-card">
+                <div className="home-highlight-img-wrap">
+                  <img src="https://static.wixstatic.com/media/2c3d7b_fa9106025dc2418188e9f01cf93c78c4~mv2.jpg" alt="Experienced Instructors" className="home-highlight-img" />
+                </div>
                 <div className="highlight-body">
                   <h3 className="highlight-title">Experienced Instructors</h3>
                   <p className="highlight-desc">Learn from certified instructors who keep training interactive, practical, and supportive.</p>
