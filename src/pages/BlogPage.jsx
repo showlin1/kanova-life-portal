@@ -5,18 +5,25 @@ import wixClient from '../wixClient';
 
 export default function BlogPage() {
   const [blogs, setBlogs] = useState([]);
+  const [pageContent, setPageContent] = useState(() => wixClient.getDefaultPageContent('blog'));
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
-    async function loadBlogs() {
+    async function loadData() {
       try {
-        const data = await wixClient.getBlogs();
+        const [blogData, contentData] = await Promise.all([
+          wixClient.getBlogs(),
+          wixClient.getPageContent('blog')
+        ]);
         if (isMounted) {
-          if (data && data.length) {
-            setBlogs(data);
+          if (blogData && blogData.length) {
+            setBlogs(blogData);
           } else {
             setBlogs(wixClient.getDefaultBlogs());
+          }
+          if (contentData) {
+            setPageContent(contentData);
           }
         }
       } catch (err) {
@@ -25,11 +32,12 @@ export default function BlogPage() {
         if (isMounted) setLoading(false);
       }
     }
-    loadBlogs();
+    loadData();
     return () => { isMounted = false; };
   }, []);
 
   const list = blogs.length ? blogs : wixClient.getDefaultBlogs();
+  const heroContent = pageContent?.hero || wixClient.getDefaultPageContent('blog').hero;
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -38,10 +46,10 @@ export default function BlogPage() {
         <section className="hero" style={{ padding: '70px 0 80px' }}>
           <div className="container">
             <h1 className="hero-title" style={{ fontSize: '2.8rem', marginBottom: '16px' }}>
-              First Aid &amp; Safety Insights
+              {heroContent.title || 'First Aid & Safety Insights'}
             </h1>
             <p className="hero-sub" style={{ marginBottom: 0 }}>
-              Practical guides and training updates from Canadian Red Cross certified instructors.
+              {heroContent.subtitle || 'Practical guides and training updates from Canadian Red Cross certified instructors.'}
             </p>
           </div>
         </section>

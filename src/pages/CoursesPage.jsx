@@ -6,18 +6,25 @@ import wixClient from '../wixClient';
 export default function CoursesPage() {
   const [activeCategory, setActiveCategory] = useState('all');
   const [courses, setCourses] = useState([]);
+  const [pageContent, setPageContent] = useState(() => wixClient.getDefaultPageContent('courses'));
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
     async function loadData() {
       try {
-        const data = await wixClient.getCourses();
+        const [courseData, contentData] = await Promise.all([
+          wixClient.getCourses(),
+          wixClient.getPageContent('courses')
+        ]);
         if (isMounted) {
-          if (data && data.length) {
-            setCourses(data);
+          if (courseData && courseData.length) {
+            setCourses(courseData);
           } else {
             setCourses(wixClient.getDefaultCourses());
+          }
+          if (contentData) {
+            setPageContent(contentData);
           }
         }
       } catch (e) {
@@ -36,6 +43,8 @@ export default function CoursesPage() {
     ? categories
     : categories.filter(c => c.id === activeCategory);
 
+  const heroContent = pageContent?.hero || wixClient.getDefaultPageContent('courses').hero;
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Navbar activePage="courses" />
@@ -44,13 +53,13 @@ export default function CoursesPage() {
         <section className="hero" style={{ padding: '70px 0 80px' }}>
           <div className="container">
             <div className="pill-badge">
-              <span>🛡️</span> WSIB Approved &amp; Canadian Red Cross Certified
+              {heroContent.badge || '🛡️ WSIB Approved & Canadian Red Cross Certified'}
             </div>
             <h1 className="hero-title" style={{ fontSize: '2.8rem', marginBottom: '16px' }}>
-              Training Courses &amp; Programs
+              {heroContent.title || 'Training Courses & Programs'}
             </h1>
             <p className="hero-sub" style={{ marginBottom: 0 }}>
-              Explore our 7 specialized training categories designed for workplaces, healthcare professionals, childcare providers, and individuals across Northern Ontario.
+              {heroContent.subtitle || 'Explore our 7 specialized training categories designed for workplaces, healthcare professionals, childcare providers, and individuals across Northern Ontario.'}
             </p>
           </div>
         </section>

@@ -3,7 +3,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import wixClient from '../wixClient';
 
-const CITIES = {
+const DEFAULT_CITIES = {
   'Thunder Bay': [
     'Current River Community Centre',
     'Vickers Heights Community Centre',
@@ -34,8 +34,9 @@ export default function BookingPage() {
 
   const [courses, setCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState(null);
+  const [citiesMap, setCitiesMap] = useState(DEFAULT_CITIES);
   const [city, setCity] = useState('Thunder Bay');
-  const [venue, setVenue] = useState(CITIES['Thunder Bay'][0]);
+  const [venue, setVenue] = useState(DEFAULT_CITIES['Thunder Bay'][0]);
   const [selectedSession, setSelectedSession] = useState(SESSIONS[0]);
 
   // Promo code
@@ -58,7 +59,7 @@ export default function BookingPage() {
       return {
         title: 'First Aid & CPR Training Course',
         date: SESSIONS[0].date,
-        venue: CITIES['Thunder Bay'][0],
+        venue: DEFAULT_CITIES['Thunder Bay'][0],
         city: 'Thunder Bay',
         name: 'Student',
         total: 0,
@@ -71,11 +72,14 @@ export default function BookingPage() {
 
   useEffect(() => {
     let isMounted = true;
-    async function loadCourses() {
+    async function loadInitialData() {
       try {
-        const list = await wixClient.getCourses();
-        const all = (list && list.length) ? list : wixClient.getDefaultCourses();
+        const [courseList, locList] = await Promise.all([
+          wixClient.getCourses(),
+          wixClient.getLocations()
+        ]);
         if (isMounted) {
+          const all = (courseList && courseList.length) ? courseList : wixClient.getDefaultCourses();
           setCourses(all);
           const cleanId = (queryCourseId || '').toLowerCase();
           const match = all.find(c =>
@@ -84,6 +88,22 @@ export default function BookingPage() {
             (c.aliasId && c.aliasId.toLowerCase() === cleanId)
           ) || all[0];
           setSelectedCourse(match);
+
+          if (locList && locList.length) {
+            const grouped = wixClient.getGroupedLocations(locList);
+            const dynamicMap = {};
+            Object.keys(grouped).forEach(cName => {
+              dynamicMap[cName] = grouped[cName].map(item => item.venue || item.address);
+            });
+            setCitiesMap(dynamicMap);
+            const firstCity = Object.keys(dynamicMap)[0];
+            if (!dynamicMap[city]) {
+              setCity(firstCity);
+              setVenue(dynamicMap[firstCity]?.[0] || '');
+            } else if (!dynamicMap[city].includes(venue)) {
+              setVenue(dynamicMap[city][0] || '');
+            }
+          }
         }
       } catch (e) {
         const def = wixClient.getDefaultCourses();
@@ -93,13 +113,14 @@ export default function BookingPage() {
         }
       }
     }
-    loadCourses();
+    loadInitialData();
     return () => { isMounted = false; };
   }, [queryCourseId]);
 
   const handleCityChange = (newCity) => {
     setCity(newCity);
-    setVenue(CITIES[newCity][0]);
+    const venuesForCity = citiesMap[newCity] || [];
+    setVenue(venuesForCity[0] || '');
   };
 
   const handleCourseChange = (courseId) => {
@@ -333,7 +354,7 @@ export default function BookingPage() {
                 <div className="booking-card" style={{ marginBottom: '24px' }}>
                   <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '16px' }}>Step 1: Choose Your City</h3>
                   <div className="city-selector">
-                    {Object.keys(CITIES).map(c => (
+                    {Object.keys(citiesMap).map(c => (
                       <button
                         key={c}
                         type="button"
@@ -349,7 +370,7 @@ export default function BookingPage() {
                     Select Training Venue:
                   </h4>
                   <div className="venue-list">
-                    {CITIES[city].map(v => (
+                    {(citiesMap[city] || []).map(v => (
                       <button
                         key={v}
                         type="button"

@@ -582,6 +582,273 @@ class WixClient {
     }
   }
 
+  // --- LOCATIONS CMS ---
+  async getLocations() {
+    try {
+      const res = await this.fetchApi('/wix-data/v2/items/query', {
+        method: 'POST',
+        body: JSON.stringify({
+          dataCollectionId: 'Locations',
+          query: {
+            sort: [{ fieldName: 'order', order: 'ASC' }],
+            paging: { limit: 100 }
+          }
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.dataItems && data.dataItems.length > 0) {
+          return data.dataItems.map(item => ({
+            id: item.id,
+            ...item.data
+          }));
+        }
+      }
+      return this.getDefaultLocations();
+    } catch (e) {
+      console.warn('Error fetching locations from Wix CMS:', e);
+      return this.getDefaultLocations();
+    }
+  }
+
+  async addLocation(locData) {
+    const res = await this.fetchApi('/wix-data/v2/items', {
+      method: 'POST',
+      body: JSON.stringify({
+        dataCollectionId: 'Locations',
+        dataItem: { data: locData }
+      })
+    });
+    return res.json();
+  }
+
+  async updateLocation(id, locData) {
+    const res = await this.fetchApi(`/wix-data/v2/items/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        dataCollectionId: 'Locations',
+        dataItem: { data: locData }
+      })
+    });
+    return res.json();
+  }
+
+  async deleteLocation(id) {
+    const res = await this.fetchApi(`/wix-data/v2/items/${id}?dataCollectionId=Locations`, {
+      method: 'DELETE'
+    });
+    return res.status === 200;
+  }
+
+  getDefaultLocations() {
+    return [
+      { id: "loc-1", city: "Thunder Bay", venue: "Current River Community Centre", address: "450 Dewe Avenue, Thunder Bay", description: "Main headquarters and primary regular training location.", order: 1 },
+      { id: "loc-2", city: "Thunder Bay", venue: "Vickers Heights Community Centre", address: "107 Broadway Avenue, Thunder Bay", description: "Accessible south-end training facility.", order: 2 },
+      { id: "loc-3", city: "Thunder Bay", venue: "West Thunder Community Centre", address: "915 Edward St S, Thunder Bay", description: "Spacious training hall with ample parking.", order: 3 },
+      { id: "loc-4", city: "Thunder Bay", venue: "North End Community Centre", address: "954 Huron Ave, Thunder Bay", description: "North-end community center venue.", order: 4 },
+      { id: "loc-5", city: "Nipigon", venue: "Nipigon Community Centre", address: "138 Wadsworth Dr, Nipigon, ON", description: "Serving the Township of Nipigon and Red Rock communities.", order: 5 },
+      { id: "loc-6", city: "Terrace Bay", venue: "Terrace Bay Community Centre", address: "1 Selkirk Ave, Terrace Bay, ON", description: "Serving North Shore businesses and residents.", order: 6 }
+    ];
+  }
+
+  getGroupedLocations(locs = null) {
+    const list = locs && locs.length ? locs : this.getDefaultLocations();
+    const grouped = {};
+    list.forEach(item => {
+      const c = item.city || 'Thunder Bay';
+      if (!grouped[c]) grouped[c] = [];
+      grouped[c].push(item);
+    });
+    return grouped;
+  }
+
+  // --- HOME HIGHLIGHTS CMS ---
+  async getHomeHighlights() {
+    try {
+      const res = await this.fetchApi('/wix-data/v2/items/query', {
+        method: 'POST',
+        body: JSON.stringify({
+          dataCollectionId: 'HomeHighlights',
+          query: {
+            sort: [{ fieldName: 'order', order: 'ASC' }],
+            paging: { limit: 50 }
+          }
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.dataItems && data.dataItems.length > 0) {
+          return data.dataItems.map(item => ({
+            id: item.id,
+            ...item.data,
+            imageUrl: this.resolveImageUrl(item.data.imageUrl || item.data.image, 'https://static.wixstatic.com/media/2c3d7b_39839bc5388e4600b74859f9a2c7f3a1~mv2.jpg')
+          }));
+        }
+      }
+      return this.getDefaultHomeHighlights();
+    } catch (e) {
+      console.warn('Error fetching home highlights from Wix CMS:', e);
+      return this.getDefaultHomeHighlights();
+    }
+  }
+
+  getDefaultHomeHighlights() {
+    return [
+      { id: "hh-1", title: "Canadian Red Cross Certified", description: "Earn an Intermediate First Aid certification recognized across Canada by employers and colleges.", imageUrl: "https://static.wixstatic.com/media/2c3d7b_39839bc5388e4600b74859f9a2c7f3a1~mv2.jpg", order: 1 },
+      { id: "hh-2", title: "WSIB-Compliant Training", description: "Meet Ontario workplace health and safety legislative training requirements with confidence.", imageUrl: "https://static.wixstatic.com/media/2c3d7b_82a57891a9bf4c1f938f772967e22bbc~mv2.jpg", order: 2 },
+      { id: "hh-3", title: "Flexible Learning Options", description: "Choose in-class or blended learning options to fit demanding work and personal schedules.", imageUrl: "https://static.wixstatic.com/media/2c3d7b_8f2f7652e1834fa7a5174bdcb9aec024~mv2.jpg", order: 3 },
+      { id: "hh-4", title: "3-Year Certification Validity", description: "Intermediate First Aid and CPR Level C certifications remain valid for up to three years.", imageUrl: "https://static.wixstatic.com/media/2c3d7b_da911de336714a9cb0e32d5b2cec49b3~mv2.jpg", order: 4 },
+      { id: "hh-5", title: "Recertification Available", description: "Keep your certification active with a one-day recertification course at a discounted rate.", imageUrl: "https://static.wixstatic.com/media/2c3d7b_f0327b6872624c5bbb9b7e00a185e1c4~mv2.jpg", order: 5 },
+      { id: "hh-6", title: "Experienced Instructors", description: "Learn from certified instructors who keep training interactive, practical, and supportive.", imageUrl: "https://static.wixstatic.com/media/2c3d7b_fa9106025dc2418188e9f01cf93c78c4~mv2.jpg", order: 6 }
+    ];
+  }
+
+  // --- FAQS CMS ---
+  async getFAQs() {
+    try {
+      const res = await this.fetchApi('/wix-data/v2/items/query', {
+        method: 'POST',
+        body: JSON.stringify({
+          dataCollectionId: 'FAQs',
+          query: {
+            sort: [{ fieldName: 'order', order: 'ASC' }],
+            paging: { limit: 100 }
+          }
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.dataItems && data.dataItems.length > 0) {
+          return data.dataItems.map(item => ({
+            id: item.id,
+            q: item.data.question || item.data.q,
+            a: item.data.answer || item.data.a,
+            ...item.data
+          }));
+        }
+      }
+      return this.getDefaultFAQs();
+    } catch (e) {
+      console.warn('Error fetching FAQs from Wix CMS:', e);
+      return this.getDefaultFAQs();
+    }
+  }
+
+  getDefaultFAQs() {
+    return [
+      { id: "faq-1", q: "What is your booking policy?", a: "Registrations for our courses may be placed at any time, based on availability shown on our website. Course registrations and purchases are strictly non-refundable, but we understand that plans can change, so we offer flexible options for rescheduling or transferring your booking. If you need to change your booking, we're happy to reschedule you to another convenient date or provide a course credit, provided you give us at least 48 hours' notice before your scheduled training. Course credits do not expire and may be transferred to another individual or course. 48 hours' notice or more — No fee to reschedule, or you may choose to receive a course credit. Less than 48 hours' notice — A rescheduling fee of 50% of your course fee applies. Same-day cancellation or missed course — Your seat is forfeited and the course must be rebooked at the regular course fee.", order: 1 },
+      { id: "faq-2", q: "Are your courses WSIB approved?", a: "Yes, all our courses are WSIB-approved and meet the requirements for workplace safety standards in Ontario.", order: 2 },
+      { id: "faq-3", q: "Which course should I take?", a: "For workplace requirements, we recommend Standard First Aid with CPR/AED Level C. If you only need foundational life-saving skills, Emergency First Aid is a great 1-day option. For healthcare providers, Basic Life Support (BLS) is required.", order: 3 },
+      { id: "faq-4", q: "Which payment methods do you accept?", a: "We accept online payments through our website using major credit cards such as Visa, MasterCard, and American Express. Payments are processed securely to ensure your information is protected.", order: 4 },
+      { id: "faq-5", q: "I'm running late for my class. Can I still attend?", a: "If you're running late, please contact us as soon as possible. We will do our best to accommodate you, but arriving on time ensures you don't miss important parts of the training.", order: 5 },
+      { id: "faq-6", q: "Can I take a Recertification course?", a: "Yes, we offer Recertification courses for those who need to renew their certification. Please ensure your current certification is still valid before enrolling.", order: 6 },
+      { id: "faq-7", q: "Are these courses recognized nationwide?", a: "Yes, our courses are recognized across Canada and meet national standards for first aid training. This ensures that your certification is valid wherever you go.", order: 7 },
+      { id: "faq-8", q: "Are all of your classes confirmed?", a: "Classes are confirmed once the minimum number of participants is met. You will receive a confirmation email once your class is confirmed.", order: 8 },
+      { id: "faq-9", q: "How do I book a group training?", a: "To book a group training, please contact us directly. We offer flexible options for corporate and group bookings, including on-site training at your location.", order: 9 },
+      { id: "faq-10", q: "I've completed my training, when will I get my certificate?", a: "Certificates are typically issued within 48 hours of completing your training. You will receive an email with a digital copy, and a printed version can be requested if needed.", order: 10 },
+      { id: "faq-11", q: "Can I bring someone else with me to class?", a: "Yes, you can bring someone else with me to class, but they must also register for the course in advance to ensure a spot is reserved for them.", order: 11 },
+      { id: "faq-12", q: "Should I confirm with my employer or school before registering?", a: "Yes. We are happy to suggest a level based on your role, but the final requirement is set by your employer, regulatory college, or school program coordinator. Confirm with them before you register so you take the right course the first time.", order: 12 }
+    ];
+  }
+
+  // --- PAGE CONTENT CMS ---
+  async getPageContent(pageKey = 'home') {
+    try {
+      const res = await this.fetchApi('/wix-data/v2/items/query', {
+        method: 'POST',
+        body: JSON.stringify({
+          dataCollectionId: 'PageContent',
+          query: {
+            filter: { pageKey: { $eq: pageKey } },
+            paging: { limit: 50 }
+          }
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.dataItems && data.dataItems.length > 0) {
+          const map = {};
+          data.dataItems.forEach(item => {
+            const d = item.data || {};
+            const sec = d.sectionKey || item.id;
+            map[sec] = { id: item.id, ...d };
+          });
+          return map;
+        }
+      }
+      return this.getDefaultPageContent(pageKey);
+    } catch (e) {
+      console.warn(`Error fetching PageContent for ${pageKey} from Wix CMS:`, e);
+      return this.getDefaultPageContent(pageKey);
+    }
+  }
+
+  getDefaultPageContent(pageKey) {
+    if (pageKey === 'home') {
+      return {
+        hero: {
+          badge: "🛡️ Canadian Red Cross Training Partner",
+          title: "WSIB Approved First Aid Training in Thunder Bay",
+          subtitle: "As a Canadian Red Cross Training Partner, our first aid courses are WSIB approved in Ontario, so your certification meets workplace safety requirements with confidence.",
+          imageUrl: "https://static.wixstatic.com/media/0ec70773d1ca4891a636a4623e110cc9.jpg",
+          buttonText: "Book a Course →",
+          buttonLink: "/courses"
+        },
+        about: {
+          eyebrow: "ABOUT KANOVA LIFE",
+          title: "Canadian Red Cross Training Partner in Thunder Bay",
+          description: "Kanova Life provides Canadian Red Cross First Aid, CPR/AED and Basic Life Support training across Northern Ontario. Whether you need certification for your workplace, school program, or personal confidence, our experienced instructors deliver practical, hands-on courses in an engaging and supportive environment.",
+          imageUrl: "https://static.wixstatic.com/media/2c3d7b_39839bc5388e4600b74859f9a2c7f3a1~mv2.jpg",
+          buttonText: "Browse Upcoming Sessions →",
+          buttonLink: "/courses",
+          points: "✓ WSIB-compliant workplace first aid training\n✓ Interactive, hands-on classroom practice with manikins & AED trainers\n✓ Serving Thunder Bay, Nipigon, Terrace Bay and surrounding areas"
+        },
+        corporate: {
+          eyebrow: "PRIVATE & CORPORATE TRAINING",
+          title: "Custom Group Training for Your Team",
+          description: "We bring Canadian Red Cross certified training directly to your workplace, facility or community center in Northern Ontario. Flexible scheduling for groups of all sizes.",
+          buttonText: "Inquire for Group Training →",
+          buttonLink: "/locations"
+        },
+        newsletter: {
+          eyebrow: "STAY INFORMED & SAVE",
+          title: "Subscribe to Our Newsletter",
+          description: "Stay up to date with upcoming First Aid & CPR course schedules in Thunder Bay, safety tips, workplace compliance updates, and exclusive discount codes directly to your inbox."
+        }
+      };
+    }
+
+    if (pageKey === 'courses') {
+      return {
+        hero: {
+          badge: "🛡️ WSIB Approved & Canadian Red Cross Certified",
+          title: "Training Courses & Programs",
+          subtitle: "Explore our 7 specialized training categories designed for workplaces, healthcare professionals, childcare providers, and individuals across Northern Ontario."
+        }
+      };
+    }
+
+    if (pageKey === 'locations') {
+      return {
+        hero: {
+          title: "Our Training Locations",
+          subtitle: "Comfortable, accessible community training centers across Northern Ontario."
+        }
+      };
+    }
+
+    if (pageKey === 'blog') {
+      return {
+        hero: {
+          title: "First Aid & Safety Insights",
+          subtitle: "Practical guides and training updates from Canadian Red Cross certified instructors."
+        }
+      };
+    }
+
+    return {};
+  }
+
   async getBlogBySlug(slugOrId) {
     const blogs = await this.getBlogs();
     if (!blogs || !blogs.length) return null;
